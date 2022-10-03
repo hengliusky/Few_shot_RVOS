@@ -530,7 +530,7 @@ def build_deforamble_transformer(args):
         enc_n_points=args.enc_n_points,  # 4
         two_stage=args.two_stage,  # false
         two_stage_num_proposals=args.num_queries,  # 5
-        use_dab=True)
+        use_dab=args.use_dab)
 
 
 class MLP(nn.Module):

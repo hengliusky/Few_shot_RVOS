@@ -25,7 +25,7 @@ import datasets.samplers as samplers
 from datasets import build_dataset, get_coco_api_from_dataset
 from engine import train_one_epoch, evaluate, evaluate_a2d
 # from models import build_model, few_build_model
-from models import build_model, few_build_model, few_build_model1
+from models import build_model, few_build_model, few_build_model1, few_build_model2
 from datasets.sailvos import SAILVOSDataset
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
 import torch.nn.functional as F

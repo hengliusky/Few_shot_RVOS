@@ -36,4 +36,5 @@ echo "Load pretrained weights from: ${PRETRAINED_WEIGHTS}"
   --output_dir=${OUTPUT_DIR} --pretrained_weights=${PRETRAINED_WEIGHTS} ${PY_ARGS}
 echo "Working path is: ${OUTPUT_DIR}"
 
-# ./train_ytvos.sh ytvos/r50-24  pretrained_weights/r50_pretrained.pth --backbone resnet50
+# ./train_ytvos.sh ytvos/r50-24-exp39  pretrained_weights/r50_pretrained.pth --backbone resnet50
+# exp39:0927修改，增加转换函数及改变乘以mask位置

@@ -242,6 +242,13 @@ class ReferFormer(nn.Module):
         #     ffn_list.append(MLP(hidden_dim, hidden_dim, 1024 * (i + 1), 3))
         # self.ffn = nn.ModuleList(ffn_list)
         # self.Decoder = Decoder(2048, 1024, 256)
+        dropout = 0.1
+        self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm(128)
+        self.self_attn = nn.MultiheadAttention(128, 8, dropout)
+        self.ffn = MLP(128, 256, 256, 3)
+        # self.cross_attn =
+
 
 
 
@@ -299,7 +306,7 @@ class ReferFormer(nn.Module):
 
             # vision language early-fusion
             qsrc_proj_l = rearrange(qsrc_proj_l, '(b t) c h w -> (t h w) b c', b=b, t=t)
-            qsrc_proj_l = extended_simple_transform(qsrc_proj_l, 1.3)
+            # qsrc_proj_l = extended_simple_transform(qsrc_proj_l, 1.3)
             qsrc_proj_l = self.fusion_module(tgt=qsrc_proj_l,
                                             memory=query_text_word_features,
                                             memory_key_padding_mask=query_text_word_masks,
@@ -328,7 +335,7 @@ class ReferFormer(nn.Module):
 
                 # vision language early-fusion
                 src = rearrange(src, '(b t) c h w -> (t h w) b c', b=b, t=t)
-                src = extended_simple_transform(src, 1.3)
+                # src = extended_simple_transform(src, 1.3)
                 src = self.fusion_module(tgt=src,
                                          memory=query_text_word_features,
                                          memory_key_padding_mask=query_text_word_masks,
@@ -358,12 +365,10 @@ class ReferFormer(nn.Module):
         support_text_word_features = support_text_word_features.permute(1, 0, 2)  # [length, batch_size, c]
 
         # Follow Deformable-DETR, we use the last three stages outputs from backbone
-        for i in range(s_b):
-            support_masks = s_targets[i]['masks'].unsqueeze(1)
         for l, (feat, pos_l) in enumerate(zip(s_features[-3:], s_pos[-3:])):
             src, mask = feat.decompose()
-            support_mask = F.interpolate(support_masks.float(), src.size()[2:], mode='bilinear', align_corners=True).to(torch.bool)
-            src = src * support_mask
+            # support_mask = F.interpolate(support_masks.float(), src.size()[2:], mode='bilinear', align_corners=True).to(torch.bool)
+            # src = src * support_mask
             ssrc_proj_l = self.input_proj[l](src)
             n, c, h, w = ssrc_proj_l.shape
             # vision language early-fusion
@@ -397,7 +402,7 @@ class ReferFormer(nn.Module):
 
                 # vision language early-fusion
                 src = rearrange(src, '(b t) c h w -> (t h w) b c', b=s_b, t=s_t)
-                src = extended_simple_transform(src, 1.3)
+                # src = extended_simple_transform(src, 1.3)
                 src = self.fusion_module(tgt=src,
                                          memory=support_text_word_features,
                                          memory_key_padding_mask=support_text_word_masks,
@@ -409,9 +414,63 @@ class ReferFormer(nn.Module):
                 ssrcs.append(src)
                 smasks.append(mask)
                 sposes.append(pos_l)
+
+
+        #####1003修改
+        srcs = []
+        for i in range(s_b):
+            support_masks = s_targets[i]['masks'].unsqueeze(1)
+        for i, (query_feat, support_feat) in enumerate(zip(qsrcs, ssrcs)):
+            support_feat = F.interpolate(support_feat, query_feat.size()[2:], mode='bilinear', align_corners=True)
+            support_mask = F.interpolate(support_masks.float(), support_feat.size()[2:], mode='bilinear', align_corners=True)
+            # query_feat = F.interpolate(query_feat, support_feat.size()[2:], mode='bilinear', align_corners=True)
+            support_fg_feat = support_feat * support_mask
+            # support_bg_feat = support_feat * (1 - support_mask)
+
+            # q、k、v bf,128,h,w
+            _, support_k, support_v = self.support_qkv(support_fg_feat)
+            query_q, query_k, query_v = self.query_qkv(query_feat)
+            _, _, qh, qw = query_k.shape
+            _, c, h, w = support_k.shape
+            _, vc, _, _ = support_v.shape
+
+            assert qh == h and qw == w
+            s_middle_frame_index = int(s_t/2)
+            support_k = support_k.view(s_b, s_t, c, h, w)
+            support_v = support_v.view(s_b, s_t, c, h, w)
+            s_middle_k = support_k[:, s_middle_frame_index]
+            s_middle_v = support_v[:, s_middle_frame_index]
+            s_middle_k = rearrange(s_middle_k, 'b c h w -> (h w) b c', b=s_b, c=c, h=h, w=w)
+            s_middle_v = rearrange(s_middle_v, 'b c h w -> (h w) b c', b=s_b, c=c, h=h, w=w)
+
+
+            middle_frame_index = int(t / 2)
+            query_q = rearrange(query_q, '(b t) c h w -> (t h w) b c', b=b, t=t)
+            query_k = query_k.view(b, t, c, h, w)
+            query_v = query_v.view(b, t, c, h, w)
+            middle_k = query_k[:, middle_frame_index]
+            middle_v = query_v[:, middle_frame_index]
+            middle_k = rearrange(middle_k, 'b c h w -> (h w) b c', b=b, c=c, h=h, w=w)
+            middle_v = rearrange(middle_v, 'b c h w -> (h w) b c', b=b, c=c, h=h, w=w)
+
+            query_q = query_q + self.dropout(self.self_attn(query_q, middle_k, middle_v)[0])
+            query_q = self.layer_norm(query_q)
+            # query_q = rearrange(query_q, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
+
+            cross_out = self.self_attn(query_q, s_middle_k, s_middle_v)[0]
+            query_q = query_q + self.dropout(cross_out)
+            query_q = self.layer_norm(query_q)
+            # query_q = self.ffn(query_q)
+
+            query_q = rearrange(query_q, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
+            query_feat = self.conv_q(query_feat)
+            # after_transform = after_transform.view(-1, vc, h, w)
+            query_q = torch.cat((query_q, query_feat), dim=1)
+            srcs.append(query_q)
+
         # for i in range(s_b):
         #     support_masks = s_targets[i]['masks'].unsqueeze(1)  # bf, 1,h,w
-        srcs = []
+        """srcs = []
         for i, (query_feat, support_feat ) in enumerate(zip(qsrcs, ssrcs)):
             support_feat = F.interpolate(support_feat, query_feat.size()[2:], mode='bilinear', align_corners=True)
             # support_mask = F.interpolate(support_masks.float(), support_feat.size()[2:], mode='bilinear', align_corners=True).to(torch.bool)
@@ -458,7 +517,7 @@ class ReferFormer(nn.Module):
             query_feat = self.conv_q(query_feat)
             after_transform = after_transform.view(-1, vc, h, w)
             after_transform = torch.cat((after_transform, query_feat), dim=1)
-            srcs.append(after_transform)
+            srcs.append(after_transform)"""
         # Transformer
         # query_embeds = self.query_embed.weight  # [num_queries, c]
         ###20220901修改
@@ -552,7 +611,6 @@ class ReferFormer(nn.Module):
         mask_features = self.pixel_decoder(q_features, query_text_features, q_pos, memory,
                                            nf=t)  # [batch_size*time, c, out_h, out_w]
         mask_features = rearrange(mask_features, '(b t) c h w -> b t c h w', b=b, t=t)
-
         # dynamic conv
         outputs_seg_masks = []
         for lvl in range(hs.shape[0]):

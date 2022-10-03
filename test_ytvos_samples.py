@@ -7,7 +7,7 @@ import xlwt, xlrd
 import xlutils.copy
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 from util.Logger import TreeEvaluation as Evaluation, TimeRecord, LogTime, Tee, Loss_record
 import argparse
 import datetime
@@ -25,7 +25,7 @@ import datasets.samplers as samplers
 from datasets import build_dataset, get_coco_api_from_dataset
 from engine import train_one_epoch, evaluate, evaluate_a2d
 # from models import build_model, few_build_model
-from models import build_model, few_build_model, few_build_model1
+from models import build_model, few_build_model, few_build_model1, few_build_model2, few_build_model3
 from datasets.sailvos import SAILVOSDataset
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
 import torch.nn.functional as F
@@ -77,7 +77,7 @@ def main(args, rand):
     test_list = [1]
     test_evaluations = Evaluation(class_list=test_list)
 
-    model1, criterion, _ = few_build_model(args)
+    model1, criterion, _ = few_build_model2(args)
     device = args.device
     model1.to(device)
 
@@ -85,9 +85,10 @@ def main(args, rand):
     model1_without_ddp = model1
     n_parameters = sum(p.numel() for p in model1.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
-    model_path = 'ytvos/r50-24/group_%d/checkpoint.pth'%(args.group)
-    checkpoint = torch.load(model_path, map_location='cpu')
+    # model_path = 'ytvos/r50-24/group_%d/checkpoint.pth'%(args.group)
+    # checkpoint = torch.load(model_path, map_location='cpu')r50_24_exp38
     # checkpoint = torch.load('ytvos/r50-24/group_1_nodab/checkpoint.pth', map_location='cpu')
+    checkpoint = torch.load('ytvos/r50-24-exp40/group_1/checkpoint0014.pth', map_location='cpu')
     missing_keys, unexpected_keys = model1_without_ddp.load_state_dict(checkpoint['model'], strict=False)
     unexpected_keys = [k for k in unexpected_keys if not (k.endswith('total_params') or k.endswith('total_ops'))]
     if len(missing_keys) > 0:
@@ -97,7 +98,7 @@ def main(args, rand):
     # start inference
     model1.eval()
     print(len(data_loader_test))
-    args.query_frame = 20
+    args.query_frame = 10
     samples, targets = None, None
     workbook = xlwt.Workbook(encoding='utf-8')
     ws = workbook.add_sheet('f')

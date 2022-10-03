@@ -459,6 +459,8 @@ class RandomHorizontalFlip(object):
             # NOTE: caption for 'left' and 'right' should also change
             caption = target['caption']
             target['caption'] = caption.replace('left', '@').replace('right', 'left').replace('@', 'right')
+            # if padding_mask is not None:
+            #     padding_mask = cv2.flip(padding_mask, 1)
             return hflip(img, target)
         return img, target
 
@@ -514,6 +516,9 @@ class ToTensor(object):
         img = []
         for im in clip:
             img.append(F.to_tensor(im))
+        # if padding_mask is not None:
+        #     for p in padding_mask:
+        #         padding_mask.append(F.to_tensor(p))
         return img, target
 
 

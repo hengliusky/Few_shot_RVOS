@@ -5,7 +5,7 @@ Modified from DETR (https://github.com/facebookresearch/detr)
 """
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 from util.Logger import TreeEvaluation as Evaluation, TimeRecord, LogTime, Tee, Loss_record
 import argparse
 import datetime
@@ -23,7 +23,7 @@ import datasets.samplers as samplers
 from datasets import build_dataset, get_coco_api_from_dataset
 from ytvos_engine import train_one_epoch, evaluate, evaluate_a2d
 from models import build_model
-from models import build_model, few_build_model, few_build_model1
+from models import build_model, few_build_model, few_build_model1, few_build_model2, few_build_model3
 from datasets.sailvos import SAILVOSDataset
 from datasets.refer_ytvos import YTVOSDataset
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
@@ -35,8 +35,6 @@ from datasets.ytvos_2exp import build_yt_vos
 
 def main(args):
     args.masks = True
-    current_time = time.strftime("%Y-%m-%dT%H:%M", time.localtime())
-    my_writer = SummaryWriter(log_dir="log/" + current_time)
     utils.init_distributed_mode(args)
 
     print("git:\n  {}\n".format(utils.get_sha()))
@@ -48,14 +46,13 @@ def main(args):
     device = torch.device(args.device)
 
     # fix the seed for reproducibility
-    seed = args.seed + utils.get_rank()
     args.distributed = False
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
 
-    model, criterion, postprocessor = few_build_model(args)
+    model, criterion, postprocessor = few_build_model2(args)
     model.to(device)
 
     model_without_ddp = model
@@ -141,7 +138,7 @@ def main(args):
         model_without_ddp.load_state_dict(checkpoint_dict, strict=False)
         print("============================================>")
     # output_dir = Path(args.output_dir)
-    output_dir = os.path.join(args.output_dir, 'group_%d_nodab' % args.group)
+    output_dir = os.path.join(args.output_dir, 'group_%d' % args.group)
     output_dir = Path(output_dir)
     if args.resume:
         if args.resume.startswith('https'):
@@ -181,7 +178,7 @@ def main(args):
         if args.distributed:
             sampler_train.set_epoch(epoch)
         train_stats = train_one_epoch(
-            model, criterion, data_loader_train, optimizer, device, my_writer, epoch,
+            model, criterion, data_loader_train, optimizer, device, epoch,
             args.clip_max_norm)
         lr_scheduler.step()
         if args.output_dir:
@@ -216,7 +213,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('RVOSNet training and evaluation script', parents=[opts.get_args_parser()])
     args = parser.parse_args()
     if args.output_dir:
-        output_dir = os.path.join(args.output_dir, 'group_%d_nodab' % args.group)
+        output_dir = os.path.join(args.output_dir, 'group_%d' % args.group)
         Path(output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
 

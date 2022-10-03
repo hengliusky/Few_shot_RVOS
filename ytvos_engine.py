@@ -22,7 +22,7 @@ from tensorboardX import SummaryWriter
 
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
-                    device: torch.device, my_writer, epoch: int, max_norm: float = 0,  ):
+                    device: torch.device, epoch: int, max_norm: float = 0,  ):
     model.train()
     criterion.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -52,7 +52,6 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         losses_reduced_scaled = sum(loss_dict_reduced_scaled.values())
 
         loss_value = losses_reduced_scaled.item()
-        my_writer.add_scalar('Loss', loss_value, epoch + 1)
         if not math.isfinite(loss_value):
             print("Loss is {}, stopping training".format(loss_value))
             print(loss_dict_reduced)

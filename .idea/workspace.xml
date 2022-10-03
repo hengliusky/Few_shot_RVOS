@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="0926-1" />
+    <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="0926-1">
+      <change afterPath="$PROJECT_DIR$/models/few_referformer2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/few_referformer3.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/transforms_video.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/transforms_video.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/deformable_transformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/deformable_transformer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/few_referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_ytvos.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_ytvos.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_ytvos_samples.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_ytvos_samples.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_ytvos.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_ytvos.sh" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ytvos_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/ytvos_engine.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="true" />
@@ -59,17 +74,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/Git/ReferFormer&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;project.propVCSSupport.Issue.Navigation&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "true",
+    "last_opened_file_path": "D:/Git/ReferFormer/models",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
-}</component>
+}]]></component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
       <console-settings module-name="ReferFormer" is-module-sdk="true">
@@ -80,14 +95,14 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\Git\ReferFormer" />
       <recent name="D:\Git\ReferFormer\models" />
+      <recent name="D:\Git\ReferFormer" />
       <recent name="D:\Git\ReferFormer\datasets" />
       <recent name="D:\Git\ReferFormer\util" />
       <recent name="D:\Git\ReferFormer\libs" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test_ytvos">
+  <component name="RunManager" selected="Python.test_ytvos_samples">
     <configuration name="1" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ReferFormer" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -222,8 +237,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.test_ytvos" />
         <item itemvalue="Python.test_ytvos_samples" />
+        <item itemvalue="Python.test_ytvos" />
         <item itemvalue="Python.1" />
         <item itemvalue="Python.test_nofinetune" />
         <item itemvalue="Python.ytvos_2exp" />
@@ -292,7 +307,10 @@
       <workItem from="1663224773871" duration="81238000" />
       <workItem from="1664178310941" duration="979000" />
       <workItem from="1664179363194" duration="297000" />
-      <workItem from="1664179667569" duration="56000" />
+      <workItem from="1664179667569" duration="1251000" />
+      <workItem from="1664196598816" duration="1956000" />
+      <workItem from="1664247830900" duration="8184000" />
+      <workItem from="1664416564582" duration="30449000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -436,7 +454,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/test_ytvos_samples.py</url>
-          <line>165</line>
+          <line>166</line>
           <option name="timeStamp" value="80" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -445,9 +463,29 @@
           <option name="timeStamp" value="81" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/test_ytvos_samples.py</url>
-          <line>265</line>
-          <option name="timeStamp" value="82" />
+          <url>file://$PROJECT_DIR$/models/few_referformer.py</url>
+          <line>445</line>
+          <option name="timeStamp" value="84" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models/few_referformer3.py</url>
+          <line>557</line>
+          <option name="timeStamp" value="94" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models/few_referformer2.py</url>
+          <line>592</line>
+          <option name="timeStamp" value="95" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models/few_referformer3.py</url>
+          <line>455</line>
+          <option name="timeStamp" value="96" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models/few_referformer2.py</url>
+          <line>453</line>
+          <option name="timeStamp" value="97" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -462,10 +500,10 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ReferFormer$1.coverage" NAME="1 覆盖结果" MODIFIED="1663826498420" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ReferFormer$refer_ytvos.coverage" NAME="refer_ytvos 覆盖结果" MODIFIED="1661777465310" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/datasets" />
-    <SUITE FILE_PATH="coverage/ReferFormer$test_ytvos_samples.coverage" NAME="test_ytvos_samples 覆盖结果" MODIFIED="1663826908256" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ReferFormer$test_ytvos_samples.coverage" NAME="test_ytvos_samples 覆盖结果" MODIFIED="1664788362246" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ReferFormer$gygo.coverage" NAME="gygo 覆盖结果" MODIFIED="1661836062374" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/datasets" />
     <SUITE FILE_PATH="coverage/ReferFormer$test_nofinetune.coverage" NAME="test_nofinetune 覆盖结果" MODIFIED="1663227331342" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/ReferFormer$test_ytvos.coverage" NAME="test_ytvos 覆盖结果" MODIFIED="1663836728106" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ReferFormer$test_ytvos.coverage" NAME="test_ytvos 覆盖结果" MODIFIED="1664422789858" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ReferFormer$referformer.coverage" NAME="referformer 覆盖结果" MODIFIED="1650530650291" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/models" />
     <SUITE FILE_PATH="coverage/ReferFormer$main.coverage" NAME="main 覆盖结果" MODIFIED="1660832549609" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/ReferFormer$backbone.coverage" NAME="backbone 覆盖结果" MODIFIED="1652146691916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/models" />
