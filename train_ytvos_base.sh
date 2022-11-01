@@ -2,7 +2,7 @@
 set -x
 
 GPUS=${GPUS:-2}
-PORT=${PORT:-2950}
+PORT=${PORT:-29501}
 if [ $GPUS -lt 2 ]; then
     GPUS_PER_NODE=${GPUS_PER_NODE:-$GPUS}
 else
@@ -31,10 +31,9 @@ echo "Load pretrained weights from: ${PRETRAINED_WEIGHTS}"
 #--output_dir=${OUTPUT_DIR} --resume=${CHECKPOINT}  ${PY_ARGS}
  PYTHONPATH="$(dirname $0)/..":$PYTHONPATH \
   python3 -m torch.distributed.launch --nproc_per_node=1 --master_port=${PORT} --use_env \
-  train_ytvos.py --with_box_refine --binary --freeze_text_encoder --dataset_file mini-ytvos \
-  --epochs 24 --lr_drop 3 5 \
+  train_ytvos_base.py  --with_box_refine --binary  --freeze_text_encoder --dataset_file mini-ytvos \
+  --epochs 24 --lr_drop 3 5  \
   --output_dir=${OUTPUT_DIR} --pretrained_weights=${PRETRAINED_WEIGHTS} ${PY_ARGS}
 echo "Working path is: ${OUTPUT_DIR}"
 
-# ./train_ytvos.sh ytvos/r50-24-exp44  pretrained_weights/r50_pretrained.pth --backbone resnet50
-# exp39:0927修改，增加转换函数及改变乘以mask位置
+# ./train_ytvos_base.sh ytvos/r50-24-base  pretrained_weights/r50_pretrained.pth --backbone resnet50

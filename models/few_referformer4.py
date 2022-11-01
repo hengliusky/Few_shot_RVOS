@@ -45,7 +45,8 @@ class ReferFormer(nn.Module):
                  freeze_text_encoder=False, rel_coord=True,
                  use_dab=True,
                  num_patterns=0,
-                 random_refpoints_xy=False, ):
+                 use_self_attn=True,
+                 random_refpoints_xy=False,):
         """ Initializes the model.
         Parameters:
             backbone: torch module of the backbone to be used. See backbone.py
@@ -245,10 +246,7 @@ class ReferFormer(nn.Module):
         dropout = 0.1
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(128)
-        self.self_attn = nn.MultiheadAttention(128, 4, dropout)
-        self.ffn = MLP(128, 256, 256, 3)
-        # self.cross_attn =
-
+        self.use_self_attn = use_self_attn
 
 
 
@@ -416,7 +414,7 @@ class ReferFormer(nn.Module):
                 sposes.append(pos_l)
 
 
-        #####1003修改
+        #####0929修改
         srcs = []
         for i in range(s_b):
             support_masks = s_targets[i]['masks'].unsqueeze(1)
@@ -430,43 +428,45 @@ class ReferFormer(nn.Module):
             # q、k、v bf,128,h,w
             _, support_k, support_v = self.support_qkv(support_fg_feat)
             query_q, query_k, query_v = self.query_qkv(query_feat)
-            _, _, qh, qw = query_k.shape
+            bf, _, qh, qw = query_k.shape
             _, c, h, w = support_k.shape
             _, vc, _, _ = support_v.shape
 
             assert qh == h and qw == w
-            s_middle_frame_index = int(s_t/2)
+            # transforms query_middle_q to support_kv
+            # support [b*f c h w] -> [b f c h w] -> [b c f h w] -> [b c WF]
             support_k = support_k.view(s_b, s_t, c, h, w)
-            support_v = support_v.view(s_b, s_t, c, h, w)
-            s_middle_k = support_k[:, s_middle_frame_index]
-            s_middle_v = support_v[:, s_middle_frame_index]
-            s_middle_k = rearrange(s_middle_k, 'b c h w -> (h w) b c', b=s_b, c=c, h=h, w=w)
-            s_middle_v = rearrange(s_middle_v, 'b c h w -> (h w) b c', b=s_b, c=c, h=h, w=w)
-
+            support_v = support_v.view(s_b, s_t, vc, h, w)
+            # B, WK, CK
+            support_k = support_k.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1).permute(0, 2, 1).contiguous()
+            # B, CV, WK
+            support_v = support_v.permute(0, 2, 1, 3, 4).contiguous().view(b, vc, -1)
 
             middle_frame_index = int(t / 2)
-            query_q = rearrange(query_q, '(b t) c h w -> (t h w) b c', b=b, t=t)
-            query_k = query_k.view(b, t, c, h, w)
+            query_q = query_q.view(b, t, c, h, w)
+            query_k= query_k.view(b, t, c, h, w)
             query_v = query_v.view(b, t, c, h, w)
             middle_k = query_k[:, middle_frame_index]
             middle_v = query_v[:, middle_frame_index]
-            middle_k = rearrange(middle_k, 'b c h w -> (h w) b c', b=b, c=c, h=h, w=w)
-            middle_v = rearrange(middle_v, 'b c h w -> (h w) b c', b=b, c=c, h=h, w=w)
+            assert len(middle_k.shape) == 4
+            # B, CQ, WQ
+            query_q = query_q.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1)
+            middle_k = middle_k.view(b, c, -1).permute(0, 2, 1).contiguous()
+            middle_v = middle_v.contiguous().view(b, c, -1)
+            new_q, sim_middle = self.transformer1(query_q, middle_k, middle_v)
+            new_q = query_q + self.dropout(new_q.transpose(1, 2)).transpose(1, 2)
+            new_q = self.layer_norm(new_q.transpose(1, 2)).transpose(1, 2)
 
-            query_q = query_q + self.dropout(self.self_attn(query_q, middle_k, middle_v)[0])
-            query_q = self.layer_norm(query_q)
-            # query_q = rearrange(query_q, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
 
-            cross_out = self.self_attn(query_q, s_middle_k, s_middle_v)[0]
-            query_q = query_q + self.dropout(cross_out)
-            query_q = self.layer_norm(query_q)
-            # query_q = self.ffn(query_q)
+            after_transform = new_q.view(b, vc, t, h, w)
+            after_transform = after_transform.permute(0, 2, 1, 3, 4).contiguous()
 
-            query_q = rearrange(query_q, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
-            query_feat = self.conv_q(query_feat)
-            # after_transform = after_transform.view(-1, vc, h, w)
-            query_q = torch.cat((query_q, query_feat), dim=1)
-            srcs.append(query_q)
+            # [batch*frames, 1024, h/16,w/16]
+            support_fg_feat = self.conv_q(support_fg_feat[:bf])
+            after_transform = after_transform.view(-1, vc, h, w)
+
+            after_transform = torch.cat((after_transform, support_fg_feat), dim=1)
+            srcs.append(after_transform)
 
         # for i in range(s_b):
         #     support_masks = s_targets[i]['masks'].unsqueeze(1)  # bf, 1,h,w
@@ -944,6 +944,7 @@ def build(args):
         rel_coord=args.rel_coord,
         use_dab=args.use_dab,
         num_patterns=args.num_patterns,  # 0
+        use_self_attn=args.use_self_attn,
         random_refpoints_xy=args.random_refpoints_xy
     )
     matcher = build_matcher(args)

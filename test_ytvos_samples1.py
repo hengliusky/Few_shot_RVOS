@@ -7,7 +7,7 @@ import xlwt, xlrd
 import xlutils.copy
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 from util.Logger import TreeEvaluation as Evaluation, TimeRecord, LogTime, Tee, Loss_record
 import argparse
 import datetime
@@ -46,7 +46,7 @@ def main(args, rand):
     torch.backends.cudnn.benchmark = False
 
     args.masks = True
-    # args.use_dab = False
+    args.use_dab = False
     # args.dataset_file = 'mini-ytvos'
     args.binary = True
     args.with_box_refine = True
@@ -58,19 +58,19 @@ def main(args, rand):
 
 
     print(args.dataset_file)
-    save_dir = 'results'
+    save_dir = 'output'
 
     # dataset settings
     data_path = args.data_path
     if args.dataset_file == 'sailvos':
         dataset_test, _ = build_sail_vos('test', data_path)
-        save_path_prefix = os.path.join(save_dir, 'sailvosf', 'group_%d'%args.group)
-    # elif args.dataset_file == 'gygo':
-    #     dataset_test, _ = build_gygo_vos('test', data_path)
-    #     save_path_prefix = os.path.join(save_dir, 'gygof')
+        save_path_prefix = os.path.join(save_dir, 'sailvosf')
+    elif args.dataset_file == 'gygo':
+        dataset_test, _ = build_gygo_vos('test', data_path)
+        save_path_prefix = os.path.join(save_dir, 'gygof')
     else:
         dataset_test = build_yt_vos('test', data_path, set_index=args.group, support_frames=args.support_frames)
-        save_path_prefix = os.path.join(save_dir, 'ytvosf', 'group_%d'%args.group)
+        save_path_prefix = os.path.join(save_dir, 'ytvosf')
 
     data_loader_test = DataLoader(dataset_test, batch_size=1, num_workers=0, collate_fn=utils.collate_fn2)
 
@@ -78,7 +78,7 @@ def main(args, rand):
     test_list = [1]
     test_evaluations = Evaluation(class_list=test_list)
 
-    model1, criterion, _ = few_build_model2(args)
+    model1, criterion, _ = base_build_model(args)
     device = args.device
     model1.to(device)
 
@@ -86,12 +86,10 @@ def main(args, rand):
     model1_without_ddp = model1
     n_parameters = sum(p.numel() for p in model1.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
-
-    model_path = 'ytvos/r50-24-exp45/group_%d/checkpoint.pth'%(args.group)
-    print(model_path)
-    checkpoint = torch.load(model_path, map_location='cpu')
+    # model_path = 'ytvos/r50-24/group_%d/checkpoint.pth'%(args.group)
+    # checkpoint = torch.load(model_path, map_location='cpu')r50_24_exp38
     # checkpoint = torch.load('ytvos/r50-24/group_1_nodab/checkpoint.pth', map_location='cpu')
-    # checkpoint = torch.load('ytvos/r50-24-exp45/group_1/checkpoint.pth', map_location='cpu')
+    checkpoint = torch.load('ytvos/r50-24-base2/group_1/checkpoint.pth', map_location='cpu')
     missing_keys, unexpected_keys = model1_without_ddp.load_state_dict(checkpoint['model'], strict=False)
     unexpected_keys = [k for k in unexpected_keys if not (k.endswith('total_params') or k.endswith('total_ops'))]
     if len(missing_keys) > 0:
@@ -101,12 +99,11 @@ def main(args, rand):
     # start inference
     model1.eval()
     print(len(data_loader_test))
-    args.query_frame = 10
+    args.query_frame = 5
     samples, targets = None, None
-    workbook = xlwt.Workbook(encoding='utf-8')
-    ws = workbook.add_sheet('f')
-    workbook.save('f_results.xls')
-    args.visualize = True
+    # workbook = xlwt.Workbook(encoding='utf-8')
+    # ws = workbook.add_sheet('f')
+    # workbook.save('f_results.xls')
     for  index, data in tqdm(enumerate(data_loader_test), total=len(data_loader_test), leave=True):
         qsamples, qtargets, new_samples, new_targets, idx, vid, begin_new, frames_name, obj_id, exp_id = data
         if begin_new[0]:
@@ -172,9 +169,9 @@ def main(args, rand):
             pred_boxes = outputs["pred_boxes"][0]
             pred_masks = outputs["pred_masks"][0]
             pred_ref_points = outputs["reference_points"][0]
-            origin_h, origin_w = int(q_targets['size'][0]), int(q_targets['size'][1])
+            # origin_h, origin_w = int(q_targets['size'][0]), int(q_targets['size'][1])
             # len_frames, _, _ = mask.shape
-            len_frames, origin_h1, origin_w1 = mask.shape
+            len_frames, origin_h, origin_w = mask.shape
             # according to pred_logits, select the query index
             pred_scores = pred_logits.sigmoid()  # [t, q, k]
             pred_scores = pred_scores.mean(0)  # [q, k]
@@ -184,7 +181,7 @@ def main(args, rand):
             pred_masks = pred_masks[range(len_frames), max_inds, ...]  # [t, h, w]
             pred_masks = pred_masks.unsqueeze(0)  #
             mask = mask.unsqueeze(0)
-            mask = F.interpolate(mask.float(), size=(origin_h, origin_w), mode='bilinear', align_corners=False)
+            # mask = F.interpolate(mask.float(), size=(origin_h, origin_w), mode='bilinear', align_corners=False)
             pred_masks = F.interpolate(pred_masks, size=(origin_h, origin_w), mode='bilinear', align_corners=False)
             # mask = F.interpolate(mask.float(), size=(origin_h, origin_w), mode='nearest')
             # pred_masks = F.interpolate(pred_masks, size=(origin_h, origin_w), mode='nearest')
@@ -203,16 +200,15 @@ def main(args, rand):
                     else:
                         sub_frames_name = frames_name[0][i * args.query_frame:(i + 1) * args.query_frame]
                     frame_name = sub_frames_name[j]
-                    pred_masks = F.interpolate(pred_masks, size=(origin_h1, origin_w1), mode='bilinear', align_corners=False)
                     mask = pred_masks[0, j].cpu().numpy()
                     mask[mask < 0.5] = 0
                     mask[mask >= 0.5] = 1
                     mask = Image.fromarray(mask * 255).convert('L')
                     save_file = os.path.join(save_path, str(frame_name) + ".png")
                     mask.save(save_file)
-        f = tmp_f/len_video
-        j = tmp_j/len_video
-        write(filename, vid, obj_id, exp_id, j, f)
+        # f = tmp_f/len_video
+        # j = tmp_j/len_video
+        # write(filename, vid, obj_id, exp_id, j, f)
     mean_f = np.mean(test_evaluations.f_score)
     str_mean_f = 'F: %.4f ' % (mean_f)
     mean_j = np.mean(test_evaluations.j_score)
@@ -267,7 +263,7 @@ if __name__ == '__main__':
     list1 = range(1, 10)
     total_j = 0.0
     total_f = 0.0
-    a = random.sample(list1, 1)
+    a = random.sample(list1, 5)
     for i in a:
         j, f = main(args, i)
         total_j += j
@@ -277,5 +273,5 @@ if __name__ == '__main__':
     print('group_%d_Averaged F on 5 seeds: %.4f' % (args.group, total_f / 5))
     print('*' * 32 + '\n')
 
-### python test_ytvos_samples.py --dataset_file mini-ytvos --group 1
+### python test_ytvos_samples1.py --dataset_file mini-ytvos --group 1
 

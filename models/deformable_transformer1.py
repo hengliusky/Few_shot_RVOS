@@ -75,8 +75,8 @@ class DeformableTransformer(nn.Module):
             self.pos_trans = nn.Linear(d_model * 2, d_model * 2)
             self.pos_trans_norm = nn.LayerNorm(d_model * 2)
         else:
-            if not self.use_dab:
-                self.reference_points = nn.Linear(d_model, 2)  # reference point here (x, y)
+            # if not self.use_dab:
+            self.reference_points = nn.Linear(d_model, 2)  # reference point here (x, y)
 
         self.high_dim_query_update = high_dim_query_update
         if high_dim_query_update:
@@ -209,12 +209,12 @@ class DeformableTransformer(nn.Module):
             init_reference_out = reference_points
             pos_trans_out = self.pos_trans_norm(self.pos_trans(self.get_proposal_pos_embed(topk_coords_unact)))
             query_embed, tgt = torch.split(pos_trans_out, c, dim=2)
-        elif self.use_dab:
-
-            reference_points = query_embed[..., self.d_model:].sigmoid()
-            tgt = query_embed[..., :self.d_model]
-            tgt = tgt.unsqueeze(0).expand(bs, -1, -1)
-            init_reference_out = reference_points
+        # elif self.use_dab:
+        #
+        #     reference_points = query_embed[..., self.d_model:].sigmoid()
+        #     tgt = query_embed[..., :self.d_model]
+        #     tgt = tgt.unsqueeze(0).expand(bs, -1, -1)
+        #     init_reference_out = reference_points
             # 此处可以用实验证明该使用哪一种
             """ 
             # b, t, q, c = tgt.shape
@@ -227,10 +227,11 @@ class DeformableTransformer(nn.Module):
             测试是否上传至服务器
             """
         else:
+            reference_points = query_embed[..., self.d_model:].sigmoid()
             b, t, q, c = tgt.shape
             tgt = rearrange(tgt, 'b t q c -> (b t) q c')
-            query_embed = query_embed.unsqueeze(0).expand(b*t, -1, -1)      # [batch_size*time, num_queries_per_frame, c]
-            reference_points = self.reference_points(query_embed).sigmoid() # [batch_size*time, num_queries_per_frame, 2]
+            # query_embed = query_embed.unsqueeze(0).expand(b*t, -1, -1)      # [batch_size*time, num_queries_per_frame, c]
+            # reference_points = self.reference_points(query_embed).sigmoid() # [batch_size*time, num_queries_per_frame, 2]
             init_reference_out = reference_points
 
         # decoder

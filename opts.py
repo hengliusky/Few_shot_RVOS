@@ -129,7 +129,7 @@ def get_args_parser():
     parser.add_argument('--binary', action='store_true')
     parser.add_argument('--remove_difficult', action='store_true')
 
-    parser.add_argument('--output_dir', default='output',
+    parser.add_argument('--output_dir', default='results',
                         help='path where to save, empty for no saving')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -160,7 +160,8 @@ def get_args_parser():
     parser.add_argument('--query_frames', default=5, help='num of frames for each training clip')
     parser.add_argument("--sample_per_class", type=int, default=100)
     parser.add_argument("--group", type=int, default=1)
-    parser.add_argument("--use_dab",  type=bool, default=True)
+    parser.add_argument("--use_dab", default=True, type=bool)
+    parser.add_argument("--use_self_attn", default=True, type=bool)
     return parser
 
 

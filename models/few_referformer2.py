@@ -17,6 +17,7 @@ from util.misc import (NestedTensor, nested_tensor_from_tensor_list,
 from .position_encoding import PositionEmbeddingSine1D
 from .backbone import build_backbone
 from .deformable_transformer import build_deforamble_transformer
+# from .deformable_transformer1 import build_deforamble_transformer
 from .segmentation import CrossModalFPNDecoder, VisionLanguageFusionModule
 from .matcher import build_matcher
 from .criterion import SetCriterion
@@ -433,12 +434,22 @@ class ReferFormer(nn.Module):
             assert qh == h and qw == w
             # transforms query_middle_q to support_kv
             # support [b*f c h w] -> [b f c h w] -> [b c f h w] -> [b c WF]
+
+            # support_k = support_k.view(s_b, s_t, c, h, w)
+            # support_v = support_v.view(s_b, s_t, vc, h, w)
+            # # B, WK, CK
+            # support_k = support_k.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1).permute(0, 2, 1).contiguous()
+            # # B, CV, WK
+            # support_v = support_v.permute(0, 2, 1, 3, 4).contiguous().view(b, vc, -1)
+
+            # 10.18
+            s_middle_frame_index = int(s_t / 2)
             support_k = support_k.view(s_b, s_t, c, h, w)
-            support_v = support_v.view(s_b, s_t, vc, h, w)
-            # B, WK, CK
-            support_k = support_k.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1).permute(0, 2, 1).contiguous()
-            # B, CV, WK
-            support_v = support_v.permute(0, 2, 1, 3, 4).contiguous().view(b, vc, -1)
+            support_v = support_v.view(s_b, s_t, c, h, w)
+            s_middle_k = support_k[:, s_middle_frame_index]
+            s_middle_v = support_v[:, s_middle_frame_index]
+            s_middle_k = s_middle_k.view(b, c, -1).permute(0, 2, 1).contiguous()
+            s_middle_v = s_middle_v.contiguous().view(b, c, -1)
 
             middle_frame_index = int(t / 2)
             query_q = query_q.view(b, t, c, h, w)
@@ -456,7 +467,7 @@ class ReferFormer(nn.Module):
             new_q = query_q + self.dropout(new_q.transpose(1, 2)).transpose(1, 2)
             new_q = self.layer_norm(new_q.transpose(1, 2)).transpose(1, 2)
 
-            Out, sim_refer = self.transformer1(new_q, support_k, support_v)
+            Out, sim_refer = self.transformer1(new_q, s_middle_k, s_middle_v)
 
             Out = new_q + self.dropout(Out.transpose(1, 2)).transpose(1, 2)
             Out = self.layer_norm(Out.transpose(1, 2)).transpose(1, 2)
