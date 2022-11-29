@@ -9,13 +9,16 @@ Few-Shot Referring <br> Video Object Segmentation
 </h1>
 </div>
 
-<!--
+
 <p align="center"><img src="docs/network.png" width="800"/></p>
 
-> [**Language as Queries for Referring Video Object Segmentation**](https://arxiv.org/abs/2201.00487)
+<!--
+[**Language as Queries for Referring Video Object Segmentation**](https://arxiv.org/abs/2201.00487)
 >
 > Jiannan Wu, Yi Jiang, Peize Sun, Zehuan Yuan, Ping Luo
 -->
+
+
 ### Abstract
 Referring video object segmentation (RVOS), as a supervised learning task, relies on sufficient annotated data for a given scene. 
 However, in more realistic scenarios, only very limited annotations are available for a new scene, which poses great challenges to existing RVOS methods.
