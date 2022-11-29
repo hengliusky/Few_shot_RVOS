@@ -5,128 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="11-1">
-      <change afterPath="$PROJECT_DIR$/engine_referformer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/rvos_model/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/train_ytvos.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/ReferFormer.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ReferFormer.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/remote-mappings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/remote-mappings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/webServers.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/a2d.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/a2d_eval.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/categories.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/categories.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/coco.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/coco_eval.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/davis.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/gygo.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/gygo_2exp.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/gygo_gao.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/jhmdb.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/refer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/refer_ytvos.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/refexp.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/refexp_eval.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/sailvos.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/sailvos_2exp.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/sailvos_2exp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/sailvos_gao.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/sailvos_gao.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/ytvos.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/ytvos_2exp.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/ytvos_2exp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/davis2017/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/davis2017/davis.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/davis2017/evaluation.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/davis2017/metrics.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/davis2017/results.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/davis2017/utils.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/A2D-Sentences.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/JHMDB-Sentences.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/Ref-DAVIS17.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/Ref-Youtube-VOS.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/data.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/install.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/network.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/engine.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/engine_gao.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/eval_davis.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/inference_davis.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/inference_ytvos.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_gao.py" beforeDir="false" afterPath="$PROJECT_DIR$/referformer_finetune.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main_pretrain.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/backbone.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/backbone.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/criterion.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/criterion.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/deformable_transformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/deformable_transformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/few_referformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/matcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/matcher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/functions/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/functions/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/functions/ms_deform_attn_func.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/functions/ms_deform_attn_func.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/make.sh" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/make.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/modules/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/modules/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/modules/ms_deform_attn.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/modules/ms_deform_attn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/src/cpu/ms_deform_attn_cpu.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/src/cpu/ms_deform_attn_cpu.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/src/cpu/ms_deform_attn_cpu.h" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/src/cpu/ms_deform_attn_cpu.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/src/cuda/ms_deform_attn_cuda.cu" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/src/cuda/ms_deform_attn_cuda.cu" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/src/cuda/ms_deform_attn_cuda.h" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/src/cuda/ms_deform_attn_cuda.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/src/cuda/ms_deform_im2col_cuda.cuh" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/src/cuda/ms_deform_im2col_cuda.cuh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/src/ms_deform_attn.h" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/src/ms_deform_attn.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/src/vision.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/src/vision.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/ops/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/ops/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/position_encoding.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/position_encoding.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/postprocessors.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/postprocessors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/referformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/segmentation.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/segmentation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/swin_transformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/swin_transformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/model1/video_swin_transformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/rvos_model/video_swin_transformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/base_few_referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/base_few_referformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/base_segmentation.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer2.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer3.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer4.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer4.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/segmentation.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/segmentation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/test_decoder.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/opts.py" beforeDir="false" afterPath="$PROJECT_DIR$/opts.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/dist_test_davis.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/dist_train_a2d.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/dist_train_test_ytvos.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/dist_train_test_ytvos_scratch.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_gygo.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_nofinetune.py" beforeDir="false" afterPath="$PROJECT_DIR$/referformer_nofinetune.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_sailvos.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_samples.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_ytvos.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_ytvos1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_ytvos_samples.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_ytvos_samples1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/data/convert_davis_to_ytvos.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tools/data/convert_refexp_to_coco.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_gygo.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_sailvos.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos1.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/referformer_finetune.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_base.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos_base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_base.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_nodab.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_nodab.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/train_ytvos_base.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_nopre.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_nopre.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/train_ytvos_self.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_self.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos_self.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_self.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/davis_JF.py" beforeDir="false" afterPath="$PROJECT_DIR$/util/davis_JF.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util/misc.py" beforeDir="false" afterPath="$PROJECT_DIR$/util/misc.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ytvos_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/ytvos_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -194,7 +74,7 @@
     <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable" />
+    <property name="settings.editor.selected.configurable" value="sshConsole" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -436,7 +316,7 @@
       <workItem from="1669684808445" duration="1603000" />
       <workItem from="1669686789937" duration="1022000" />
       <workItem from="1669687827000" duration="420000" />
-      <workItem from="1669688281151" duration="261000" />
+      <workItem from="1669688281151" duration="3755000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -508,7 +388,21 @@
       <option name="project" value="LOCAL" />
       <updated>1667304672417</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="11-1">
+      <created>1669688644780</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1669688644780</updated>
+    </task>
+    <task id="LOCAL-00012" summary="11-1">
+      <created>1669688675680</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1669688675680</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
