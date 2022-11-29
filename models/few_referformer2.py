@@ -22,7 +22,7 @@ from .segmentation import CrossModalFPNDecoder, VisionLanguageFusionModule
 from .matcher import build_matcher
 from .criterion import SetCriterion
 from .postprocessors import build_postprocessors
-from .test_decoder import Decoder
+
 from transformers import BertTokenizer, BertModel, RobertaModel, RobertaTokenizerFast
 
 import copy

@@ -16,21 +16,14 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, DistributedSampler
-from PIL import Image
+from torch.utils.data import DataLoader
 import util.misc as utils
 import datasets.samplers as samplers
-from datasets import build_dataset, get_coco_api_from_dataset
-from ytvos_engine import train_one_epoch, evaluate, evaluate_a2d
-from models import build_model
+from ytvos_engine import train_one_epoch
 from models import build_model, few_build_model, few_build_model1, few_build_model2, few_build_model3
-from datasets.sailvos import SAILVOSDataset
-from datasets.refer_ytvos import YTVOSDataset
+
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
-import torch.nn.functional as F
 import opts
-from datasets.gygo import GyGoVOSDataset
-from tensorboardX import SummaryWriter
 from datasets.ytvos_2exp import build_yt_vos
 
 def main(args):
@@ -59,9 +52,6 @@ def main(args):
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module
-
-    # for n, p in model_without_ddp.named_parameters():
-    #     print(n)
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
@@ -103,14 +93,8 @@ def main(args):
                                   weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, args.lr_drop)
 
-    # no validation ground truth for ytvos dataset
-    # dataset_train = build_dataset(args.dataset_file, image_set='train', args=args)
-    # dataset_train = SAILVOSDataset(train=False, query_frame=5, support_frame=5)
     print(args.dataset_file)
-    data_path=args.data_path
-    # dataset_train = YTVOSDataset(query_frame=5, support_frame=5,
-    #                             sample_per_class=args.sample_per_class,
-    #                             set_index=args.group)
+    data_path = args.data_path
     dataset_train = build_yt_vos('train', data_path, set_index=args.group, support_frames=5, query_frames=5, sample_per_class=args.sample_per_class)
     if args.distributed:
         if args.cache_mode:
@@ -120,15 +104,10 @@ def main(args):
     else:
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    # batch_sampler_train = torch.utils.data.BatchSampler(
-    #     sampler_train, args.batch_size, drop_last=True)
     data_loader_train = DataLoader(dataset_train, batch_size=1, num_workers=0, collate_fn=utils.collate_fn)
-    # data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
-    #                                collate_fn=utils.collate_fn, num_workers=args.num_workers)
-    test_list = dataset_train.get_class_list()
-    test_evaluations = Evaluation(class_list=test_list)
 
-    # for Ref-Youtube-VOS and A2D-Sentences
+
+    # for Mini-Ref-Youtube-VOS
     # finetune using the pretrained weights on Ref-COCO
     if args.dataset_file != "davis" and args.dataset_file != "jhmdb" and args.pretrained_weights is not None:
         print("============================================>")
@@ -137,7 +116,6 @@ def main(args):
         checkpoint_dict = pre_trained_model_to_finetune(checkpoint, args)
         model_without_ddp.load_state_dict(checkpoint_dict, strict=False)
         print("============================================>")
-    # output_dir = Path(args.output_dir)
     output_dir = os.path.join(args.output_dir, 'group_%d' % args.group)
     output_dir = Path(output_dir)
     if args.resume:

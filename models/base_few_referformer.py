@@ -18,11 +18,10 @@ from .position_encoding import PositionEmbeddingSine1D
 from .backbone import build_backbone
 from .deformable_transformer import build_deforamble_transformer
 from .segmentation import CrossModalFPNDecoder, VisionLanguageFusionModule
-# from .base_segmentation import CrossModalFPNDecoder, VisionLanguageFusionModule
 from .matcher import build_matcher
 from .criterion import SetCriterion
 from .postprocessors import build_postprocessors
-from .test_decoder import Decoder
+
 from transformers import BertTokenizer, BertModel, RobertaModel, RobertaTokenizerFast
 
 import copy
@@ -422,136 +421,12 @@ class ReferFormer(nn.Module):
         for i, (query_feat, support_feat) in enumerate(zip(qsrcs, ssrcs)):
             support_feat = F.interpolate(support_feat, query_feat.size()[2:], mode='bilinear', align_corners=True)
             support_mask = F.interpolate(support_masks.float(), support_feat.size()[2:], mode='bilinear', align_corners=True)
-            # query_feat = F.interpolate(query_feat, support_feat.size()[2:], mode='bilinear', align_corners=True)
             support_fg_feat = support_feat * support_mask
-            # support_bg_feat = support_feat * (1 - support_mask)
-
-            # # q、k、v bf,128,h,w
-            # _, support_k, support_v = self.support_qkv(support_fg_feat)
-            # query_q, query_k, query_v = self.query_qkv(query_feat)
-            # _, _, qh, qw = query_k.shape
-            # _, c, h, w = support_k.shape
-            # _, vc, _, _ = support_v.shape
-            #
-            # assert qh == h and qw == w
-            # # transforms query_middle_q to support_kv
-            # # support [b*f c h w] -> [b f c h w] -> [b c f h w] -> [b c WF]
-            # support_k = support_k.view(s_b, s_t, c, h, w)
-            # support_v = support_v.view(s_b, s_t, vc, h, w)
-            # # B, WK, CK
-            # support_k = support_k.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1).permute(0, 2, 1).contiguous()
-            # # B, CV, WK
-            # support_v = support_v.permute(0, 2, 1, 3, 4).contiguous().view(b, vc, -1)
-            #
-            # middle_frame_index = int(t / 2)
-            # query_q = query_q.view(b, t, c, h, w)
-            # query_k= query_k.view(b, t, c, h, w)
-            # query_v = query_v.view(b, t, c, h, w)
-            # middle_k = query_k[:, middle_frame_index]
-            # middle_v = query_v[:, middle_frame_index]
-            # assert len(middle_k.shape) == 4
-            # # B, CQ, WQ
-            # query_q = query_q.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1)
-            # middle_k = middle_k.view(b, c, -1).permute(0, 2, 1).contiguous()
-            # middle_v = middle_v.contiguous().view(b, c, -1)
-            # ### 1005增加
-            # if self.use_self_attn:
-            #     new_q, sim_middle = self.transformer1(query_q, middle_k, middle_v)
-            #     ### 1003增加
-            #     new_q = query_q + self.dropout(new_q.transpose(1, 2)).transpose(1, 2)
-            #     new_q = self.layer_norm(new_q.transpose(1, 2)).transpose(1, 2)
-            #
-            #     Out, sim_refer = self.transformer1(new_q, support_k, support_v)
-            #
-            #     Out = new_q + self.dropout(Out.transpose(1, 2)).transpose(1, 2)
-            #     Out = self.layer_norm(Out.transpose(1, 2)).transpose(1, 2)
-            # else:
-            #     Out, sim_refer = self.transformer1(query_q, support_k, support_v)
-            #
-            #     Out = query_q + self.dropout(Out.transpose(1, 2)).transpose(1, 2)
-            #     Out = self.layer_norm(Out.transpose(1, 2)).transpose(1, 2)
-            #
-            # after_transform = Out.view(b, vc, t, h, w)
-            # after_transform = after_transform.permute(0, 2, 1, 3, 4).contiguous()
-            #
-            # # [batch*frames, 1024, h/16,w/16]
-            # query_frames 设为5
-            # query_feat = self.conv_q(query_feat)
             bf, c, h, w = query_feat.shape
-            # support_fg_feat = self.conv_q(support_fg_feat[:bf])
-            # # after_transform = after_transform.view(-1, vc, h, w)
-            # after_transform = torch.cat((query_feat, support_fg_feat), dim=1)
-            ## 10.12修改
             after_transform = query_feat + support_fg_feat[:bf]
             srcs.append(after_transform)
 
-        # for i in range(s_b):
-        #     support_masks = s_targets[i]['masks'].unsqueeze(1)  # bf, 1,h,w
-        """srcs = []
-        for i, (query_feat, support_feat ) in enumerate(zip(qsrcs, ssrcs)):
-            support_feat = F.interpolate(support_feat, query_feat.size()[2:], mode='bilinear', align_corners=True)
-            # support_mask = F.interpolate(support_masks.float(), support_feat.size()[2:], mode='bilinear', align_corners=True).to(torch.bool)
-            # query_feat = F.interpolate(query_feat, support_feat.size()[2:], mode='bilinear', align_corners=True)
-            # support_fg_feat = support_feat * support_mask
-            # support_bg_feat = support_feat * (1 - support_mask)
 
-            # q、k、v bf,128,h,w
-            _, support_k, support_v = self.support_qkv(support_feat)
-            query_q, query_k, query_v = self.query_qkv(query_feat)
-            _, _, qh, qw = query_k.shape
-            _, c, h, w = support_k.shape
-            _, vc, _, _ = support_v.shape
-
-            assert qh == h and qw == w
-            # transforms query_middle_q to support_kv
-            # support [b*f c h w] -> [b f c h w] -> [b c f h w] -> [b c WF]
-            support_k = support_k.view(s_b, s_t, c, h, w)
-            support_v = support_v.view(s_b, s_t, vc, h, w)
-            # B, WK, CK
-            support_k = support_k.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1).permute(0, 2, 1).contiguous()
-            # B, CV, WK
-            support_v = support_v.permute(0, 2, 1, 3, 4).contiguous().view(b, vc, -1)
-            middle_frame_index = int(t / 2)
-            query_q = query_q.view(b, t, c, h, w)
-            query_k = query_k.view(b, t, c, h, w)
-            middle_q = query_q[:, middle_frame_index]
-            assert len(middle_q.shape) == 4
-            # B, CQ, WQ
-            middle_q = middle_q.view(b, c, -1)
-            # B CV WQ --> V
-            new_V, sim_refer = self.transformer1(middle_q, support_k, support_v)
-            # print(sim_refer.shape)
-            # transform query_qkv to query_middle_kv
-            # B WK CK
-            middle_K = query_k[:, middle_frame_index]
-            middle_K = middle_K.view(b, c, -1).permute(0, 2, 1).contiguous()
-            query_q = query_q.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1)
-            Out, sim_middle = self.transformer1(query_q, middle_K, new_V)
-            after_transform = Out.view(b, vc, t, h, w)
-            after_transform = after_transform.permute(0, 2, 1, 3, 4).contiguous()
-
-            # [batch*frames, 1024, h/16,w/16]
-            query_feat = self.conv_q(query_feat)
-            after_transform = after_transform.view(-1, vc, h, w)
-            after_transform = torch.cat((after_transform, query_feat), dim=1)
-            srcs.append(after_transform)"""
-        # Transformer
-        # query_embeds = self.query_embed.weight  # [num_queries, c]
-        ###20220901修改
-        # for i, (query_feat, support_feat) in enumerate(zip(qsrcs, ssrcs)):
-        #     support_feat = F.interpolate(support_feat, query_feat.size()[2:], mode='bilinear', align_corners=True)
-        #     # support_mask = F.interpolate(support_mask.float(), support_feat.size()[2:], mode='bilinear', align_corners=True)
-        #     n, c, h, w = query_feat.shape
-        #     query_feat = rearrange(query_feat, '(b t) c h w -> (t h w) b c', b=b, t=t)
-        #     support_feat = rearrange(support_feat, '(b t) c h w -> (t h w) b c', b=s_b, t=s_t)
-        #     src = self.fusion_module(tgt=query_feat,
-        #                          memory=support_feat,
-        #                          memory_key_padding_mask=None,
-        #                          pos=None,
-        #                          query_pos=None
-        #                          )
-        #     src = rearrange(src, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
-        #     srcs.append(src)
         if self.two_stage:  # false
             query_embeds = None
         elif self.use_dab:

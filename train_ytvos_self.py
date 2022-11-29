@@ -17,20 +17,15 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, DistributedSampler
-from PIL import Image
+
 import util.misc as utils
 import datasets.samplers as samplers
-from datasets import build_dataset, get_coco_api_from_dataset
-from ytvos_engine import train_one_epoch, evaluate, evaluate_a2d
+
+from ytvos_engine import train_one_epoch
 from models import build_model
-from models import build_model, few_build_model, few_build_model1, few_build_model2, few_build_model4, base_build_model
-from datasets.sailvos import SAILVOSDataset
-from datasets.refer_ytvos import YTVOSDataset
+from models import few_build_model4
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
-import torch.nn.functional as F
 import opts
-from datasets.gygo import GyGoVOSDataset
-from tensorboardX import SummaryWriter
 from datasets.ytvos_2exp import build_yt_vos
 
 def main(args):
