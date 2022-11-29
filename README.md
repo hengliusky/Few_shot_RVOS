@@ -19,7 +19,7 @@ Few-Shot Referring <br> Video Object Segmentation
 -->
 
 
-### Abstract
+## Abstract
 Referring video object segmentation (RVOS), as a supervised learning task, relies on sufficient annotated data for a given scene. 
 However, in more realistic scenarios, only very limited annotations are available for a new scene, which poses great challenges to existing RVOS methods.
 With this in mind, we introduce a novel video segmentation task - Few-Shot Referring Video Object Segmentation (FS-RVOS). 
@@ -145,6 +145,43 @@ As described in the paper, we report the results using the model trained on A2D-
 
 Please see [Ref-Youtube-VOS](docs/Ref-Youtube-VOS.md), [Ref-DAVIS17](docs/Ref-DAVIS17.md), [A2D-Sentences](docs/A2D-Sentences.md) and [JHMDB-Sentences](docs/JHMDB-Sentences.md) for details.
 -->
+
+## Usage
+
+### Preparation
+Create a new directory data to store all the datasets.
+
+1. Downlaod the Mini-Ref-YouTube-VOS dataset from [Baidu Yun] and Mini-Ref-SAIL-VOS dataset from [Baidu Yun].
+2. Put the dataset in the `./data` folder.
+```
+data
+├─ Mini-Ref-YouTube-VOS
+│   ├─ meta_expressions
+│   └─ train
+│       ├─ Annotations
+│       ├─ JPEGImages
+│       └─ train.json
+├─ Mini-Ref-SAIL-VOS
+│   ├─ meta_expressions
+│   └─ train
+│       ├─ Annotations
+│       ├─ JPEGImages
+│       └─ train.json
+
+```
+
+### Training
+
+```
+./scripts/train_ytvos.sh [/path/to/output_dir] [/path/to/pretrained_weight] --backbone [backbone]  --group 1
+```
+
+### Inference
+
+```
+python test.py --dataset_file mini-ytvos --group 1
+```
+
 
 
 ## Acknowledgement

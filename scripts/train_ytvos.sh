@@ -36,4 +36,4 @@ echo "Load pretrained weights from: ${PRETRAINED_WEIGHTS}"
   --output_dir=${OUTPUT_DIR} --pretrained_weights=${PRETRAINED_WEIGHTS} ${PY_ARGS}
 echo "Working path is: ${OUTPUT_DIR}"
 
-# ./scripts/train_ytvos.sh ytvos/r50-24-exp44  pretrained_weights/r50_pretrained.pth --backbone resnet50
+# ./scripts/train_ytvos.sh ytvos/results  pretrained_weights/r50_pretrained.pth --backbone resnet50 --group 1

@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="none">
-      <change afterPath="$PROJECT_DIR$/docs/network.png" afterDir="false" />
+    <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="1129">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/train_ytvos.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/train_ytvos.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_ytvos.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -317,7 +318,7 @@
       <workItem from="1669684808445" duration="1603000" />
       <workItem from="1669686789937" duration="1022000" />
       <workItem from="1669687827000" duration="420000" />
-      <workItem from="1669688281151" duration="4310000" />
+      <workItem from="1669688281151" duration="6195000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -410,7 +411,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669703421907</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="1129">
+      <created>1669703970486</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1669703970486</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -440,7 +448,8 @@
     <MESSAGE value="1003" />
     <MESSAGE value="11-1" />
     <MESSAGE value="none" />
-    <option name="LAST_COMMIT_MESSAGE" value="none" />
+    <MESSAGE value="1129" />
+    <option name="LAST_COMMIT_MESSAGE" value="1129" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 import util.misc as utils
 import datasets.samplers as samplers
 from ytvos_engine import train_one_epoch
-from models import build_model, few_build_model, few_build_model1, few_build_model2, few_build_model3
+from models import few_build_model2
 
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
 import opts
