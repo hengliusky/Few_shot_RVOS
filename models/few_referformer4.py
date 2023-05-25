@@ -2,6 +2,7 @@
 ReferFormer model class.
 Modified from DETR (https://github.com/facebookresearch/detr)
 """
+# ablation study (self-affinity)
 import torch
 import torch.nn.functional as F
 from torch import nn

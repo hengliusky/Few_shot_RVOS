@@ -110,8 +110,8 @@ class SAILVOSBase(Dataset):
         
         category_id = meta[0]['category_id']
         exp = meta[exp_id]['exp']
-        # exp = " ".join(exp.lower().split())
-        exp = " ".join(exp.lower().split()).replace('man', 'blicket')
+        exp = " ".join(exp.lower().split())
+        # exp = " ".join(exp.lower().split()).replace('man', 'blicket')
         choice_frame = random.sample(frame_list, 1)  # 如果为support，这个就作为最终的choice_frame
         if test:
             frame_num = frame_len  # 注意 测试时的query_set是一个视频中的所有帧

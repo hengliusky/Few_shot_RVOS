@@ -5,10 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="1129">
+      <change beforePath="$PROJECT_DIR$/.idea/ReferFormer.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ReferFormer.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/train_ytvos.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/train_ytvos.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/sailvos_gao.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/sailvos_gao.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/few_referformer2.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/few_referformer4.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer4.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -318,7 +321,20 @@
       <workItem from="1669684808445" duration="1603000" />
       <workItem from="1669686789937" duration="1022000" />
       <workItem from="1669687827000" duration="420000" />
-      <workItem from="1669688281151" duration="6195000" />
+      <workItem from="1669688281151" duration="6675000" />
+      <workItem from="1669722950616" duration="7000" />
+      <workItem from="1670894266836" duration="699000" />
+      <workItem from="1670930335566" duration="1844000" />
+      <workItem from="1676274578479" duration="24000" />
+      <workItem from="1676274615827" duration="205000" />
+      <workItem from="1676274831679" duration="109000" />
+      <workItem from="1676275238805" duration="2138000" />
+      <workItem from="1676285730765" duration="2126000" />
+      <workItem from="1676462458068" duration="1839000" />
+      <workItem from="1676548301509" duration="259000" />
+      <workItem from="1677136943742" duration="3464000" />
+      <workItem from="1684894964995" duration="64000" />
+      <workItem from="1685002300868" duration="2701000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -418,7 +434,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669703970486</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="1129">
+      <created>1669705864834</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1669705864834</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -481,12 +504,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/models/few_referformer2.py</url>
-          <line>603</line>
+          <line>604</line>
           <option name="timeStamp" value="95" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/models/few_referformer2.py</url>
-          <line>464</line>
+          <line>465</line>
           <option name="timeStamp" value="97" />
         </line-breakpoint>
       </breakpoints>
