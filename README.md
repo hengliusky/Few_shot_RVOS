@@ -146,7 +146,7 @@ Please see [Ref-Youtube-VOS](docs/Ref-Youtube-VOS.md), [Ref-DAVIS17](docs/Ref-DA
 ### Preparation
 Create a new directory data to store all the datasets.
 
-1. Downlaod the Mini-Ref-YouTube-VOS dataset from [Baidu Yun] and Mini-Ref-SAIL-VOS dataset from [Baidu Yun].
+1. Downlaod the Mini-Ref-YouTube-VOS dataset and Mini-Ref-SAIL-VOS dataset .
 2. Put the dataset in the `./data` folder.
 ```
 data

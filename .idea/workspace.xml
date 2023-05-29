@@ -4,14 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="1129">
-      <change beforePath="$PROJECT_DIR$/.idea/ReferFormer.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ReferFormer.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="change">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/sailvos_gao.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/sailvos_gao.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer2.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer4.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer4.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -334,7 +329,9 @@
       <workItem from="1676548301509" duration="259000" />
       <workItem from="1677136943742" duration="3464000" />
       <workItem from="1684894964995" duration="64000" />
-      <workItem from="1685002300868" duration="2701000" />
+      <workItem from="1685002300868" duration="4113000" />
+      <workItem from="1685322317393" duration="14000" />
+      <workItem from="1685322362109" duration="51000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -441,7 +438,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669705864834</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="change">
+      <created>1685013352497</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1685013352497</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -472,7 +476,8 @@
     <MESSAGE value="11-1" />
     <MESSAGE value="none" />
     <MESSAGE value="1129" />
-    <option name="LAST_COMMIT_MESSAGE" value="1129" />
+    <MESSAGE value="change" />
+    <option name="LAST_COMMIT_MESSAGE" value="change" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
