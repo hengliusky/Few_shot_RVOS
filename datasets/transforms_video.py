@@ -27,7 +27,6 @@ class Check(object):
         if "masks" in target:
             fields.append("masks")
 
-        ### check if box or mask still exist after transforms
         if "boxes" in target or "masks" in target:
             if "boxes" in target:
                 cropped_boxes = target['boxes'].reshape(-1, 2, 2)
@@ -87,7 +86,6 @@ def crop(clip, target, region):
     target = target.copy()
     i, j, h, w = region
 
-    # should we do something wrt the original size?
     target["size"] = torch.tensor([h, w])
 
     fields = ["labels", "area", "iscrowd"]
@@ -146,7 +144,6 @@ def vflip(image,target):
     return flipped_image, target
 
 def resize(clip, target, size, max_size=None):
-    # size can be min_size (scalar) or (w, h) tuple
 
     def get_size_with_aspect_ratio(image_size, size, max_size=None):
         w, h = image_size
@@ -209,14 +206,12 @@ def resize(clip, target, size, max_size=None):
 
 
 def pad(clip, target, padding):
-    # assumes that we only pad on the bottom right corners
     padded_image = []
     for image in clip:
         padded_image.append(F.pad(image, (0, 0, padding[0], padding[1])))
     if target is None:
         return padded_image, None
     target = target.copy()
-    # should we do something wrt the original size?
     target["size"] = torch.tensor(padded_image[0].size[::-1])
     if "masks" in target:
         target['masks'] = torch.nn.functional.pad(target['masks'], (0, padding[0], 0, padding[1]))
@@ -296,8 +291,6 @@ class MinIoURandomCrop(object):
                     if False in mask:
                         continue
                     #TODO: use no center boxes
-                    #if not mask.any():
-                    #    continue
 
                     boxes[:, 2:] = boxes[:, 2:].clip(max=patch[2:])
                     boxes[:, :2] = boxes[:, :2].clip(min=patch[:2])
@@ -516,9 +509,6 @@ class ToTensor(object):
         img = []
         for im in clip:
             img.append(F.to_tensor(im))
-        # if padding_mask is not None:
-        #     for p in padding_mask:
-        #         padding_mask.append(F.to_tensor(p))
         return img, target
 
 

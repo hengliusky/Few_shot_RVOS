@@ -1,5 +1,3 @@
-# from libs.config.DAN_config import OPTION as opt
-# from pycocotools.ytvos import YTVOS
 from torch.utils.data import Dataset
 import os
 import numpy as np
@@ -10,7 +8,6 @@ from collections import defaultdict
 from datasets.categories import sailvos_category_dict as category_dict
 import torch
 from torch.utils.data import DataLoader
-# from transform import TrainTransform, TestTransform
 import datasets.transforms_video as T
 import torchvision.transforms as T1
 
@@ -22,8 +19,6 @@ class SAILVOSBase(Dataset):
     def prepare_metas(self):
         with open(os.path.join(str(self.meta_folder), 'meta.json'), 'r') as f:
             subset_metas_by_video = json.load(f)['videos']
-        # read expression data
-        # data/mini-ref-youtube-vos/meta_expressions/train/meta_expressions.json
         with open(str(self.ann_file), 'r') as f:
             subset_expressions_by_video = json.load(f)['videos']
         self.videos = list(subset_metas_by_video.keys())
@@ -41,26 +36,10 @@ class SAILVOSBase(Dataset):
                 meta['exp'] = exp_dict['exp']
                 meta['obj_id'] = int(exp_dict['obj_id'])
                 meta['frames'] = vid_frames
-                # get object category
                 obj_id = exp_dict['obj_id']
                 meta['category'] = vid_meta['objects'][obj_id]['category']
                 meta['category_id'] = category_dict[vid_meta['objects'][obj_id]['category']]
                 self.metas[vid].append(meta)
-            """
-            '1d746352a6': [
-            {'video': '1d746352a6','exp_id': 0,  'exp': 'a big black and white stripped cow raging towards others in front of it', 'obj_id': 1, 
-            'frames': ['00000', '00005', '00010', '00015', '00020', '00025', '00030', '00035', '00040', '00045', '00050', '00055', '00060', '00065'], 'category': 'cow', 'category_id': 27}, 
-            {'video': '1d746352a6', 'exp_id': 1, 'exp': 'a black and white cow with horns', 'obj_id': 1, 'frames': ['00000', '00005', '00010', '00015', '00020', '00025', '00030', '00035', '00040', '00045', 
-            '00050', '00055', '00060', '00065'], 'category': 'cow', 'category_id': 28}, 'category_id': 27}, 
-            {'video': '1d746352a6', 'exp_id': 2, 'exp': 'the second cow to the left of another in the front row', 'obj_id': 2, 'frames': ['00000', '00005', '00010', '00015', '00020', '00025', '00030', 
-            '00035', '00040', '00045', '00050', '00055', '00060', '00065'], 'category': 'cow', 'category_id': 27}, 
-            {'video': '1d746352a6', 'exp_id': 3, 'exp': 'a black cow walking', 'obj_id': 2, 'frames': ['00000', '00005', '00010', '00015', '00020', '00025', '00030', '00035', '00040', '00045', 
-            '00050', '00055', '00060', '00065'], 'category': 'cow', 'category_id': 27}, 
-            {'video': '1d746352a6', 'exp_id': 4, 'exp': 'the first cow to the right of another in the front row', 'obj_id': 3, 'frames': ['00000', '00005', '00010', '00015', '00020', 
-            '00025', '00030', '00035', '00040', '00045', '00050', '00055', '00060', '00065'], 'category': 'cow', 'category_id': 27}, 
-            {'video': '1d746352a6','exp_id': 5,  'exp': 'a black cow to the far right of two other cows', 'obj_id': 3, 'frames': ['00000', '00005', '00010', '00015', '00020', '00025', '00030', 
-            '00035', '00040', '00045', '00050', '00055', '00060', '00065'], 'category': 'cow', 'category_id': 27}],
-            """
 
             catToVids[category_dict[vid_meta['objects'][obj_id]['category']]].append(vid)
         self.catToVids = catToVids
@@ -99,22 +78,21 @@ class SAILVOSBase(Dataset):
         meta = self.metas[vid]
         frame_list = meta[0]['frames']
         frame_len = len(frame_list)
-        obj_exp = defaultdict(list)  # 存放obj_id其对应的exp_id
-        obj_ids = []  # 存放obj_id
+        obj_exp = defaultdict(list)
+        obj_ids = []
         for i in meta:
             obj_exp[i['obj_id']].append(i['exp_id'])
             obj_ids.append(i['obj_id'])
         obj_id = random.sample(obj_ids, 1)[0]
         if exp_id is None:
-            exp_id = random.sample(obj_exp[obj_id], 1)[0] # 只用了第一句描述
+            exp_id = random.sample(obj_exp[obj_id], 1)[0]
         
         category_id = meta[0]['category_id']
         exp = meta[exp_id]['exp']
         exp = " ".join(exp.lower().split())
-        # exp = " ".join(exp.lower().split()).replace('man', 'blicket')
-        choice_frame = random.sample(frame_list, 1)  # 如果为support，这个就作为最终的choice_frame
+        choice_frame = random.sample(frame_list, 1)
         if test:
-            frame_num = frame_len  # 注意 测试时的query_set是一个视频中的所有帧
+            frame_num = frame_len
         if frame_num > 1:
             if frame_num <= frame_len:
                 choice_idx = frame_list.index(choice_frame[0])
@@ -142,7 +120,7 @@ class SAILVOSBase(Dataset):
             mask[mask > 1] = 1
             label = torch.tensor(category_id)
 
-            mask = (mask == obj_id).astype(np.float32)  # 0,1 binary 这一步是为了只保留obj_id对应的分割目标的mask区域
+            mask = (mask == obj_id).astype(np.float32)
             if (mask > 0).any():
                 y1, y2, x1, x2 = self.bounding_box(mask)
                 box = torch.tensor([x1, y1, x2, y2]).to(torch.float)
@@ -159,8 +137,6 @@ class SAILVOSBase(Dataset):
             exps.append(exp)
             mask_oris.append(mask_ori)
 
-        # transform
-        # w, h = img.shape
         w, h = mask.shape
         labels = torch.stack(labels, dim=0)
         boxes = torch.stack(boxes, dim=0)
@@ -168,26 +144,25 @@ class SAILVOSBase(Dataset):
         boxes[:, 1::2].clamp_(min=0, max=h)
         masks = torch.stack(masks, dim=0)
         target = {
-            # 'frames_idx': torch.tensor(sample_indx),  # [T,]
-            'labels': labels,  # [T,]
-            'boxes': boxes,  # [T, 4], xyxy
-            'masks': masks,  # [T, H, W]
-            'valid': torch.tensor(valid),  # [T,]
+            'labels': labels,
+            'boxes': boxes,
+            'masks': masks,
+            'valid': torch.tensor(valid),
             'caption': exp,
             'orig_size': torch.as_tensor([int(h), int(w)]),
             'size': torch.as_tensor([int(h), int(w)])
         }
 
-        # "boxes" normalize to [0, 1] and transform from xyxy to cxcywh in self._transform
+
         if test:
             imgs = [self._transforms(img) for img in imgs]
             target['size'] = torch.tensor([imgs[0].shape[-2],imgs[0].shape[-1]])
         else:
             imgs, target = self._transforms(imgs, target)
-        imgs = torch.stack(imgs, dim=0)  # [T, 3, H, W]
+        imgs = torch.stack(imgs, dim=0)
 
         # FIXME: handle "valid", since some box may be removed due to random crop
-        if torch.any(target['valid'] == 1):  # at leatst one instance
+        if torch.any(target['valid'] == 1):
             instance_check = True
         else:
             idx = random.randint(0, self.__len__() - 1)
@@ -202,10 +177,6 @@ class SAILVOSBase(Dataset):
 
 class SAILVOS_train(SAILVOSBase):
     def __init__(self, data_path=None, support_frames=5, transforms=None, iterations=None, shots=1):
-        """
-        iterations: num of iterations per epoch for each class, if len(iterations)=1 all classes share the same value
-        shots: num of samples for each class during fine-tuning 
-        """
         self.support_frames = support_frames
         self._transforms = transforms
 
@@ -222,9 +193,8 @@ class SAILVOS_train(SAILVOSBase):
         for class_id in self.class_list:
             tmp_list = self.getVidIds(catIds=class_id)
             tmp_list.sort()
-            self.video_ids.append(tmp_list)  # list[list[video_id]] 获取每一个class_id对应的video_id
+            self.video_ids.append(tmp_list)
 
-        # select (num of shots) videos from the video list
         self.support_video_ids = []
         for video_id in self.video_ids:
             support_video_ids = random.sample(video_id, shots)
@@ -245,9 +215,8 @@ class SAILVOS_train(SAILVOSBase):
         self.length = len(self.test_video_classes)
 
     def __getitem__(self, index):
-        list_id = self.test_video_classes[index]  # 类别id
+        list_id = self.test_video_classes[index]
         vid_set = self.support_video_ids[list_id]
-        # select one sample from (num of shots) support videos
         support_vid = random.sample(vid_set, 1)
         imgs, targets, _ = self.get_GT_byclass(support_vid[0], self.support_frames, False)
         
@@ -259,9 +228,6 @@ class SAILVOS_train(SAILVOSBase):
 
 class SAILVOS_test(SAILVOSBase):
     def __init__(self, data_path=None, transforms=None, support_list=None):
-        """
-        support_video_ids: used to filter out support videos from video list
-        """
         self._transforms = transforms
 
         data_dir = os.path.join(data_path, 'data', 'mini-SAIL-VOS')
@@ -279,9 +245,7 @@ class SAILVOS_test(SAILVOSBase):
             tmp_list.sort()
             for support_id in support_ids:
                 tmp_list.remove(support_id)
-            self.query_video_ids.append(tmp_list)  # list[list[video_id]] 获取每一个class_id对应的video_id
-
-        # for each expression
+            self.query_video_ids.append(tmp_list)
         self.sample_metas = []
         for video_ids in self.query_video_ids:
             for video_id in video_ids:
@@ -289,16 +253,6 @@ class SAILVOS_test(SAILVOSBase):
                 for meta in metas:
                     self.sample_metas.append(meta)
 
-        # self.test_video_classes = []
-
-        # for i in range(len(self.class_list)):
-        #     if len(iterations) == 1:
-        #         for j in range(iterations[0]):
-        #             self.test_video_classes.append(i)
-        #     else:
-        #         for j in range(iterations[i]):
-        #             self.test_video_classes.append(i)
-        
         self.length = len(self.sample_metas)
 
     def __getitem__(self, index):
@@ -335,7 +289,6 @@ def make_coco_transforms(image_set, max_size=640):
             normalize,
         ])
 
-    # we do not use the 'val' set since the annotations are inaccessible
     if image_set == 'val':
         return T.Compose([
             T.RandomResize([360], max_size=640),
@@ -351,8 +304,6 @@ def build_sail_vos(stage, data_path, support_frames=None, iterations=None, shots
         sail_vos = SAILVOS_train(data_path, support_frames, transforms, iterations, shots)
         support_list = sail_vos.get_support_frames()
     else:
-        # inference
-        # build transform
         transforms = T1.Compose([
             T1.Resize(360),
             T1.ToTensor(),
@@ -363,15 +314,5 @@ def build_sail_vos(stage, data_path, support_frames=None, iterations=None, shots
     return sail_vos, support_list
 
 if __name__ == "__main__":
-    # traindataset = SAILVOSDataset(train=True, query_frame=5, support_frame=5)
-    # train_loader = DataLoader(traindataset, batch_size=1, shuffle=True, num_workers=0,
-    #                          drop_last=True)
-    # test_dataset = SAILVOSDataset(train=False, query_frame=5, support_frame=5)
-    # test_loader = DataLoader(test_dataset, batch_size=1, shuffle=True, num_workers=0,
-    #                           drop_last=True)
-    # trained_iter = 0
-    # for iter, data in enumerate(test_loader):
-    #     trained_iter += 1
-    #     imgs, targets = data
-    dataset_train, support_video_ids = build_sail_vos('train', data_path='/ssd-nvme1/duni/FS-RVOS', support_frames=5, iterations=[20], shots=1)
-    dataset_test, _ = build_sail_vos('test', data_path='/ssd-nvme1/duni/FS-RVOS', support_list=support_video_ids)
+    dataset_train, support_video_ids = build_sail_vos('train', data_path='/***/***/***', support_frames=5, iterations=[20], shots=1)
+    dataset_test, _ = build_sail_vos('test', data_path='/***/***/***', support_list=support_video_ids)

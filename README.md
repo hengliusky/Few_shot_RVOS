@@ -4,7 +4,8 @@ The official implementation of the paper:
 <div align="center">
 <h1>
 <b>
-Learning Cross-Modal Affinity for Referring Video Object Segmentation Targeting Limited Samples
+Learning Cross-Modal Affinity for Referring Video Object Segmentation 
+Targeting Limited Samples
 </b>
 </h1>
 </div>

@@ -1,5 +1,4 @@
-# Copyright (c) Aishwarya Kamath & Nicolas Carion. Licensed under the Apache License 2.0. All Rights Reserved
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+
 """
 Transforms and data augmentation for both image + bbox.
 """
@@ -20,7 +19,6 @@ def crop(image, target, region):
     target = target.copy()
     i, j, h, w = region
 
-    # should we do something wrt the original size?
     target["size"] = torch.tensor([h, w])
 
     fields = ["labels", "area", "iscrowd", "positive_map", "isfinal"]
@@ -41,10 +39,8 @@ def crop(image, target, region):
         target["masks"] = target["masks"][:, i : i + h, j : j + w]
         fields.append("masks")
 
-    # remove elements for which the boxes or masks that have zero area
+
     if "boxes" in target or "masks" in target:
-        # favor boxes selection when defining which elements to keep
-        # this is compatible with previous implementation
         if "boxes" in target:
             cropped_boxes = target["boxes"].reshape(-1, 2, 2)
             keep = torch.all(cropped_boxes[:, 1, :] > cropped_boxes[:, 0, :], dim=1)
@@ -80,7 +76,6 @@ def hflip(image, target):
 
 
 def resize(image, target, size, max_size=None):
-    # size can be min_size (scalar) or (w, h) tuple
 
     def get_size_with_aspect_ratio(image_size, size, max_size=None):
         w, h = image_size
@@ -138,12 +133,10 @@ def resize(image, target, size, max_size=None):
 
 
 def pad(image, target, padding):
-    # assumes that we only pad on the bottom right corners
     padded_image = F.pad(image, (0, 0, padding[0], padding[1]))
     if target is None:
         return padded_image, None
     target = target.copy()
-    # should we do something wrt the original size?
     target["size"] = torch.tensor(padded_image[::-1])
     if "masks" in target:
         target["masks"] = torch.nn.functional.pad(target["masks"], (0, padding[0], 0, padding[1]))
@@ -163,7 +156,7 @@ class RandomSizeCrop(object):
     def __init__(self, min_size: int, max_size: int, respect_boxes: bool = False):
         self.min_size = min_size
         self.max_size = max_size
-        self.respect_boxes = respect_boxes  # if True we can't crop a box out
+        self.respect_boxes = respect_boxes
 
     def __call__(self, img: PIL.Image.Image, target: dict):
         init_boxes = len(target["boxes"])

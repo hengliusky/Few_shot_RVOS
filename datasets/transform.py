@@ -1,14 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Author  : duni
-# @File    : transform.py
-import numpy as np
-import torch
-import cv2
-
-import random
-import imgaug.augmenters as iaa
-from imgaug.augmentables.segmaps import SegmentationMapsOnImage
 
 
 class Compose(object):
@@ -70,13 +59,6 @@ class RandomAffine(object):
             img_aug, segmap_aug = seq(image=img, segmentation_maps=segmap)
             imgs[idx] = img_aug
             annos[idx] = segmap_aug.get_arr()
-        # 这里出了问题，anno进去之后维度会从（720，1280，1）变为（720，1280）
-        # print('RandomAffine', annos[0].shape)
-        # print('RandomAffine', annos[1].shape)
-        # print('RandomAffine', annos[2].shape)
-        # print('RandomAffine', annos[3].shape)
-        # print('RandomAffine', annos[4].shape)
-
         return imgs, annos
 
 class AdditiveNoise(object):

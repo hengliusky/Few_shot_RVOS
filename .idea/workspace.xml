@@ -7,6 +7,23 @@
     <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="change">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/sailvos_2exp.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/sailvos_2exp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/sailvos_gao.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/sailvos_gao.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/samplers.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/samplers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/transform.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/transform.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/transforms_image.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/transforms_image.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/transforms_video.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/transforms_video.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets/ytvos_2exp.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/ytvos_2exp.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/backbone.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/backbone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/base_few_referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/base_few_referformer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/criterion.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/criterion.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/deformable_transformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/deformable_transformer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/deformable_transformer1.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/deformable_transformer1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/few_referformer2.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/few_referformer4.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer4.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/matcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/matcher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/position_encoding.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/position_encoding.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -331,7 +348,10 @@
       <workItem from="1684894964995" duration="64000" />
       <workItem from="1685002300868" duration="4113000" />
       <workItem from="1685322317393" duration="14000" />
-      <workItem from="1685322362109" duration="51000" />
+      <workItem from="1685322362109" duration="1306000" />
+      <workItem from="1685523072464" duration="3000" />
+      <workItem from="1685523109349" duration="1749000" />
+      <workItem from="1685524866373" duration="1227000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -445,7 +465,14 @@
       <option name="project" value="LOCAL" />
       <updated>1685013352497</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="change">
+      <created>1685322424200</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1685322424200</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -484,23 +511,13 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/models/matcher.py</url>
-          <line>167</line>
+          <line>156</line>
           <option name="timeStamp" value="19" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/models/criterion.py</url>
-          <line>193</line>
-          <option name="timeStamp" value="20" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/datasets/sailvos_2exp.py</url>
-          <line>431</line>
+          <line>352</line>
           <option name="timeStamp" value="52" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/datasets/ytvos_2exp.py</url>
-          <line>416</line>
-          <option name="timeStamp" value="68" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/test.py</url>
@@ -509,12 +526,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/models/few_referformer2.py</url>
-          <line>604</line>
+          <line>535</line>
           <option name="timeStamp" value="95" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/models/few_referformer2.py</url>
-          <line>465</line>
+          <line>419</line>
           <option name="timeStamp" value="97" />
         </line-breakpoint>
       </breakpoints>
