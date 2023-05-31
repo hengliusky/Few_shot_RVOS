@@ -69,7 +69,7 @@ class SAILVOSBase(Dataset):
         cols = np.any(img, axis=0)
         rmin, rmax = np.where(rows)[0][[0, -1]]
         cmin, cmax = np.where(cols)[0][[0, -1]]
-        return rmin, rmax, cmin, cmax  # y1, y2, x1, x2
+        return rmin, rmax, cmin, cmax
 
 
 
@@ -84,7 +84,7 @@ class SAILVOSBase(Dataset):
             obj_ids.append(i['obj_id'])
         obj_id = random.sample(obj_ids, 1)[0]
         if exp_id is None:
-            exp_id = random.sample(obj_exp[obj_id], 1)[0]  #
+            exp_id = random.sample(obj_exp[obj_id], 1)[0]
 
         category_id = meta[0]['category_id']
         exp = meta[exp_id]['exp']
@@ -158,8 +158,8 @@ class SAILVOSBase(Dataset):
             imgs, target = self._transforms(imgs, target)
         imgs = torch.stack(imgs, dim=0)
 
-        # FIXME: handle "valid", since some box may be removed due to random crop
-        if torch.any(target['valid'] == 1):  # at leatst one instance
+
+        if torch.any(target['valid'] == 1):
             instance_check = True
         else:
             idx = random.randint(0, self.__len__() - 1)
@@ -196,7 +196,7 @@ class SAILVOS_train(SAILVOSBase):
             tmp_list.sort()
             self.video_ids.append(tmp_list)
 
-        # select (num of shots) videos from the video list
+
         self.support_video_ids = []
         for video_id in self.video_ids:
             support_video_ids = random.sample(video_id, shots)
@@ -313,7 +313,7 @@ def make_coco_transforms(image_set, max_size=640):
             normalize,
         ])
 
-    # we do not use the 'val' set since the annotations are inaccessible
+
     if image_set == 'val':
         return T.Compose([
             T.RandomResize([360], max_size=640),
@@ -329,8 +329,8 @@ def build_sail_vos(stage, data_path, support_frames=None, iterations=None, shots
         sail_vos = SAILVOS_train(data_path, support_frames, transforms, iterations, shots)
         support_list = sail_vos.get_support_frames()
     else:
-        # inference
-        # build transform
+
+
         transforms = T1.Compose([
             T1.Resize(360),
             T1.ToTensor(),

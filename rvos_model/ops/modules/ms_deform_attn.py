@@ -1,11 +1,11 @@
-# Modify for sample points visualization
-# ------------------------------------------------------------------------------------------------
-# Deformable DETR
-# Copyright (c) 2020 SenseTime. All Rights Reserved.
-# Licensed under the Apache License, Version 2.0 [see LICENSE for details]
-# ------------------------------------------------------------------------------------------------
-# Modified from https://github.com/chengdazhi/Deformable-Convolution-V2-PyTorch/tree/pytorch_1.0.0
-# ------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -41,7 +41,7 @@ class MSDeformAttn(nn.Module):
         if d_model % n_heads != 0:
             raise ValueError('d_model must be divisible by n_heads, but got {} and {}'.format(d_model, n_heads))
         _d_per_head = d_model // n_heads
-        # you'd better set _d_per_head to a power of 2 which is more efficient in our CUDA implementation
+
         if not _is_power_of_2(_d_per_head):
             warnings.warn("You'd better set d_model in MSDeformAttn to make the dimension of each attention head a power of 2 "
                           "which is more efficient in our CUDA implementation.")
@@ -99,7 +99,7 @@ class MSDeformAttn(nn.Module):
         sampling_offsets = self.sampling_offsets(query).view(N, Len_q, self.n_heads, self.n_levels, self.n_points, 2)
         attention_weights = self.attention_weights(query).view(N, Len_q, self.n_heads, self.n_levels * self.n_points)
         attention_weights = F.softmax(attention_weights, -1).view(N, Len_q, self.n_heads, self.n_levels, self.n_points)
-        # N, Len_q, n_heads, n_levels, n_points, 2
+
         if reference_points.shape[-1] == 2:
             offset_normalizer = torch.stack([input_spatial_shapes[..., 1], input_spatial_shapes[..., 0]], -1)
             sampling_locations = reference_points[:, :, None, :, None, :] \

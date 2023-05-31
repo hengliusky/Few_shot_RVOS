@@ -1,4 +1,4 @@
-### Referformer:nofinetune
+
 import os
 import torch.nn.functional as F
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
@@ -40,13 +40,13 @@ save_path_prefix = os.path.join(save_dir, 'sailvosf_gao_no')
 data_loader_train = DataLoader(dataset_train, batch_size=1, num_workers=0, collate_fn=utils.collate_fn1)
 data_loader_test = DataLoader(dataset_test, batch_size=1, num_workers=0, collate_fn=utils.collate_fn3)
 
-# test_list = dataset_test.get_class_list()
+
 test_list = [1]
 test_evaluations = Evaluation(class_list=test_list)
 model1, criterion, _ = build_model(args)
 device = args.device
 model1.to(device)
-# args.visualize = True
+
 model1_without_ddp = model1
 n_parameters = sum(p.numel() for p in model1.parameters() if p.requires_grad)
 print('number of params:', n_parameters)
@@ -57,12 +57,9 @@ if len(missing_keys) > 0:
     print('Missing Keys: {}'.format(missing_keys))
 if len(unexpected_keys) > 0:
     print('Unexpected Keys: {}'.format(unexpected_keys))
-# # start inference
+
 model1.eval()
-# metric_logger = utils.MetricLogger(delimiter="  ")
-# metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-# print_freq = 10
-# for _, _, samples, targets in metric_logger.log_every(data_loader_train, print_freq):
+
 print(len(data_loader_test))
 args.query_frame = 20
 
@@ -82,13 +79,13 @@ for samples, atargets, idx, vid, frames_name in tqdm.tqdm(data_loader_test):
             query_mask = samples.mask[:, i * args.query_frame:]
             qsamples = utils.NestedTensor(query_img, query_mask)
             qtargets = {
-                'labels': [t["labels"][i * args.query_frame:] for t in targets][0],  # [T,]
-                'boxes': [t["boxes"][i * args.query_frame:] for t in targets][0],  # [T, 4], xyxy
-                'masks': [t["masks"][i * args.query_frame:] for t in targets][0],  # [T, H, W]
-                'valid': [t["valid"][i * args.query_frame:] for t in targets][0],  # [T,]
+                'labels': [t["labels"][i * args.query_frame:] for t in targets][0],
+                'boxes': [t["boxes"][i * args.query_frame:] for t in targets][0],
+                'masks': [t["masks"][i * args.query_frame:] for t in targets][0],
+                'valid': [t["valid"][i * args.query_frame:] for t in targets][0],
                 'orig_size': [t["orig_size"] for t in targets][0],
                 'size': [t["size"] for t in targets][0],
-                # 'area': [t["area"][i * args.query_frame:] for t in targets]
+
             }
             mask = [t["masks"][i * args.query_frame:] for t in targets][0]
         else:
@@ -97,42 +94,39 @@ for samples, atargets, idx, vid, frames_name in tqdm.tqdm(data_loader_test):
             qsamples = utils.NestedTensor(query_img, query_mask)
             qtargets = {
                 'labels': [t["labels"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
-                # [T,]
                 'boxes': [t["boxes"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
-                # [T, 4], xyxy
                 'masks': [t["masks"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
-                # [T, H, W]
-                'valid': [t["valid"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],  # [T,]
+                'valid': [t["valid"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
                 'orig_size': [t["orig_size"] for t in targets][0],
                 'size': [t["size"] for t in targets][0],
-                # 'area': [t["area"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets]
+
             }
             mask = [t["masks"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0]
         qqtargets = [qtargets]
-        # qtargets = list(qtargets)
+
         with torch.no_grad():
             outputs = model1(qsamples, captions, qqtargets)
-        # pred_masks = outputs["pred_masks"][0]  # F, 5 ,h,w
+
         pred_logits = outputs["pred_logits"][0]
         pred_boxes = outputs["pred_boxes"][0]
         pred_masks = outputs["pred_masks"][0]
         pred_ref_points = outputs["reference_points"][0]
         origin_h, origin_w = int(qtargets['size'][0]), int(qtargets['size'][1])
         len_frames, _, _ = mask.shape
-        # len_frames, origin_h, origin_w = mask.shape
-        # according to pred_logits, select the query index
-        pred_scores = pred_logits.sigmoid()  # [t, q, k]
-        pred_scores = pred_scores.mean(0)  # [q, k]
-        max_scores, _ = pred_scores.max(-1)  # [q,]
-        _, max_ind = max_scores.max(-1)  # [1,]
+
+
+        pred_scores = pred_logits.sigmoid()
+        pred_scores = pred_scores.mean(0)
+        max_scores, _ = pred_scores.max(-1)
+        _, max_ind = max_scores.max(-1)
         max_inds = max_ind.repeat(len_frames)
-        pred_masks = pred_masks[range(len_frames), max_inds, ...]  # [t, h, w]
-        pred_masks = pred_masks.unsqueeze(0)  #
+        pred_masks = pred_masks[range(len_frames), max_inds, ...]
+        pred_masks = pred_masks.unsqueeze(0)
         mask = mask.unsqueeze(0)
         mask = F.interpolate(mask.float(), size=(origin_h, origin_w), mode='bilinear', align_corners=False)
         pred_masks = F.interpolate(pred_masks, size=(origin_h, origin_w), mode='bilinear', align_corners=False)
         pred_masks = pred_masks.sigmoid()
-        # pred_masks = (pred_masks.sigmoid() > args.threshold).squeeze(0).detach().cpu().numpy()
+
         test_evaluations.update_evl(tuple([1]), mask, pred_masks)
         args.visualize = True
         if args.visualize:
@@ -166,4 +160,3 @@ print(str_mean_f, str_f_list + '\n')
 print(str_mean_j, str_j_list + '\n')
 
 
-# python referformer_nofinetune.py --dataset_file sailvos

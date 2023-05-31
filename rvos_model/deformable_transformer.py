@@ -1,11 +1,3 @@
-# ------------------------------------------------------------------------
-# Deformable DETR
-# Copyright (c) 2020 SenseTime. All Rights Reserved.
-# Licensed under the Apache License, Version 2.0 [see LICENSE for details]
-# ------------------------------------------------------------------------
-# Modified from DETR (https://github.com/facebookresearch/detr)
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-# ------------------------------------------------------------------------
 
 import copy
 from typing import Optional, List
@@ -57,7 +49,7 @@ class DeformableTransformer(nn.Module):
             self.pos_trans = nn.Linear(d_model * 2, d_model * 2)
             self.pos_trans_norm = nn.LayerNorm(d_model * 2)
         else:
-            self.reference_points = nn.Linear(d_model, 2) # reference point here (x, y)
+            self.reference_points = nn.Linear(d_model, 2)
 
         self._reset_parameters()
 
@@ -80,11 +72,11 @@ class DeformableTransformer(nn.Module):
 
         dim_t = torch.arange(num_pos_feats, dtype=torch.float32, device=proposals.device)
         dim_t = temperature ** (2 * (dim_t // 2) / num_pos_feats)
-        # N, L, 4
+
         proposals = proposals.sigmoid() * scale
-        # N, L, 4, 128
+
         pos = proposals[:, :, :, None] / dim_t
-        # N, L, 4, 64, 2
+
         pos = torch.stack((pos[:, :, :, 0::2].sin(), pos[:, :, :, 1::2].cos()), dim=4).flatten(2)
         return pos
 
@@ -131,14 +123,7 @@ class DeformableTransformer(nn.Module):
 
     def forward(self, srcs, tgt, masks, pos_embeds, query_embed=None):
         assert self.two_stage or query_embed is not None
-        """
-        srcs (list[Tensor]): list of tensors num_layers x [batch_size*time, c, hi, wi], input of encoder
-        tgt (Tensor): [batch_size, time, c, num_queries_per_frame]
-        masks (list[Tensor]): list of tensors num_layers x [batch_size*time, hi, wi], the mask of srcs
-        pos_embeds (list[Tensor]): list of tensors num_layers x [batch_size*time, c, hi, wi], position encoding of srcs
-        query_embed (Tensor): [num_queries, c]
-        """
-        # prepare input for encoder
+
         src_flatten = []
         mask_flatten = []
         lvl_pos_embed_flatten = []
@@ -148,33 +133,28 @@ class DeformableTransformer(nn.Module):
             spatial_shape = (h, w)
             spatial_shapes.append(spatial_shape)
 
-            src = src.flatten(2).transpose(1, 2) # [batch_size, hi*wi, c]
-            mask = mask.flatten(1)               # [batch_size, hi*wi]
-            pos_embed = pos_embed.flatten(2).transpose(1, 2) # [batch_size, hi*wi, c]
+            src = src.flatten(2).transpose(1, 2)
+            mask = mask.flatten(1)
+            pos_embed = pos_embed.flatten(2).transpose(1, 2)
             lvl_pos_embed = pos_embed + self.level_embed[lvl].view(1, 1, -1)
 
             lvl_pos_embed_flatten.append(lvl_pos_embed)
             src_flatten.append(src)
             mask_flatten.append(mask)
 
-        # For a clip, concat all the features, first fpn layer size, then frame size
-        src_flatten = torch.cat(src_flatten, 1)     # [bs*t, \sigma(hi*wi), c] 
-        mask_flatten = torch.cat(mask_flatten, 1)   # [bs*t, \sigma(hi*wi)]
+        src_flatten = torch.cat(src_flatten, 1)
+        mask_flatten = torch.cat(mask_flatten, 1)
         lvl_pos_embed_flatten = torch.cat(lvl_pos_embed_flatten, 1) 
         spatial_shapes = torch.as_tensor(spatial_shapes, dtype=torch.long, device=src_flatten.device)
         level_start_index = torch.cat((spatial_shapes.new_zeros((1, )), spatial_shapes.prod(1).cumsum(0)[:-1]))
         valid_ratios = torch.stack([self.get_valid_ratio(m) for m in masks], 1)
 
-        # encoder
-        # memory: [bs*t, \sigma(hi*wi), c]
         memory = self.encoder(src_flatten, spatial_shapes, level_start_index, valid_ratios, lvl_pos_embed_flatten, mask_flatten)
 
-        # prepare input for decoder
         bs, _, c = memory.shape 
         if self.two_stage:
             output_memory, output_proposals = self.gen_encoder_output_proposals(memory, mask_flatten, spatial_shapes)
 
-            # hack implementation for two-stage Deformable DETR
             enc_outputs_class = self.decoder.class_embed[self.decoder.num_layers](output_memory)
             enc_outputs_coord_unact = self.decoder.bbox_embed[self.decoder.num_layers](output_memory) + output_proposals
 
@@ -189,33 +169,25 @@ class DeformableTransformer(nn.Module):
         else:
             b, t, q, c = tgt.shape
             tgt = rearrange(tgt, 'b t q c -> (b t) q c')
-            query_embed = query_embed.unsqueeze(0).expand(b*t, -1, -1)      # [batch_size*time, num_queries_per_frame, c]
-            reference_points = self.reference_points(query_embed).sigmoid() # [batch_size*time, num_queries_per_frame, 2]
+            query_embed = query_embed.unsqueeze(0).expand(b*t, -1, -1)
+            reference_points = self.reference_points(query_embed).sigmoid()
             init_reference_out = reference_points
 
-        # decoder
         hs, inter_references, inter_samples = self.decoder(tgt, reference_points, memory,
                                             spatial_shapes, level_start_index, valid_ratios, query_embed, mask_flatten)
 
         inter_references_out = inter_references
 
-        # convert memory to fpn format
-        memory_features = []  # 8x -> 32x
+        memory_features = []
         spatial_index = 0
         for lvl in range(self.num_feature_level - 1):
             h, w = spatial_shapes[lvl]
-            # [bs*t, c, h, w]
-            memory_lvl = memory[:, spatial_index : spatial_index + h * w, :].reshape(bs, h, w, c).permute(0, 3, 1, 2).contiguous()  
+            memory_lvl = memory[:, spatial_index : spatial_index + h * w, :].reshape(bs, h, w, c).permute(0, 3, 1, 2).contiguous()
             memory_features.append(memory_lvl)
             spatial_index += h * w
 
         if self.two_stage:
             return hs, memory_features, init_reference_out, inter_references_out, enc_outputs_class, enc_outputs_coord_unact, inter_samples
-        # hs: [l, batch_size*time, num_queries_per_frame, c], where l is number of decoder layers
-        # init_reference_out: [batch_size*time, num_queries_per_frame, 2]
-        # inter_references_out: [l, batch_size*time, num_queries_per_frame, 4]
-        # memory: [batch_size*time, \sigma(hi*wi), c]
-        # memory_features: list[Tensor]
 
         return hs, memory_features, init_reference_out, inter_references_out, None, None, inter_samples
 
@@ -227,12 +199,10 @@ class DeformableTransformerEncoderLayer(nn.Module):
                  n_levels=4, n_heads=8, n_points=4):
         super().__init__()
 
-        # self attention
         self.self_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
-        # ffn
         self.linear1 = nn.Linear(d_model, d_ffn)
         self.activation = _get_activation_fn(activation)
         self.dropout2 = nn.Dropout(dropout)
@@ -251,15 +221,12 @@ class DeformableTransformerEncoderLayer(nn.Module):
         return src
 
     def forward(self, src, pos, reference_points, spatial_shapes, level_start_index, padding_mask=None):
-        # self attention
+
         src2, sampling_locations, attention_weights = self.self_attn(self.with_pos_embed(src, pos), reference_points, 
                                                                 src, spatial_shapes, level_start_index, padding_mask)
         src = src + self.dropout1(src2)
         src = self.norm1(src)
-
-        # ffn
         src = self.forward_ffn(src)
-
         return src
 
 
@@ -299,17 +266,14 @@ class DeformableTransformerDecoderLayer(nn.Module):
                  n_levels=4, n_heads=8, n_points=4):
         super().__init__()
 
-        # cross attention
         self.cross_attn = MSDeformAttn(d_model, n_levels, n_heads, n_points)
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
-        # self attention
         self.self_attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout)
         self.dropout2 = nn.Dropout(dropout)
         self.norm2 = nn.LayerNorm(d_model)
 
-        # ffn
         self.linear1 = nn.Linear(d_model, d_ffn)
         self.activation = _get_activation_fn(activation)
         self.dropout3 = nn.Dropout(dropout)
@@ -328,20 +292,18 @@ class DeformableTransformerDecoderLayer(nn.Module):
         return tgt
 
     def forward(self, tgt, query_pos, reference_points, src, src_spatial_shapes, level_start_index, src_padding_mask=None):
-        # self attention
+
         q = k = self.with_pos_embed(tgt, query_pos)
         tgt2 = self.self_attn(q.transpose(0, 1), k.transpose(0, 1), tgt.transpose(0, 1))[0].transpose(0, 1)
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
 
-        # cross attention
         tgt2, sampling_locations, attention_weights = self.cross_attn(self.with_pos_embed(tgt, query_pos),
                                reference_points,
                                src, src_spatial_shapes, level_start_index, src_padding_mask)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
 
-        # ffn
         tgt = self.forward_ffn(tgt)
 
         return tgt, sampling_locations, attention_weights
@@ -354,18 +316,18 @@ class DeformableTransformerDecoder(nn.Module):
         self.layers = _get_clones(decoder_layer, num_layers)
         self.num_layers = num_layers
         self.return_intermediate = return_intermediate
-        # hack implementation for iterative bounding box refinement and two-stage Deformable DETR
+
         self.bbox_embed = None
         self.class_embed = None
 
     def forward(self, tgt, reference_points, src, src_spatial_shapes, src_level_start_index, src_valid_ratios,
                 query_pos=None, src_padding_mask=None):
-        # we modify here for get the information of sample points
+
         output = tgt 
 
         intermediate = []
         intermediate_reference_points = []
-        intermediate_samples = [] # sample points
+        intermediate_samples = []
         for lid, layer in enumerate(self.layers):
             if reference_points.shape[-1] == 4:
                 reference_points_input = reference_points[:, :, None] \
@@ -376,19 +338,14 @@ class DeformableTransformerDecoder(nn.Module):
             output, sampling_locations, attention_weights = layer(output, query_pos, reference_points_input, 
                                                         src, src_spatial_shapes, src_level_start_index, src_padding_mask)
 
-            # sampling_loactions: [N, Len_q, self.n_heads, self.n_levels, self.n_points, 2], 
-            #                     [B, Q, n_head, n_level(num_feature_level*num_frames), n_points, 2]
-            # attention_weights: [B, Q, n_head, n_level(num_feature_level*num_frames), n_points]
-            # src_valid_ratios: [N, self.n_levels, 2]
             N, Len_q = sampling_locations.shape[:2]
             sampling_locations = sampling_locations / src_valid_ratios[:, None, None, :, None, :]
-            weights_flat = attention_weights.view(N, Len_q, -1)      # [B, Q, n_head * n_level * n_points]
-            samples_flat = sampling_locations.view(N, Len_q, -1, 2)  # [B, Q, n_head * n_level * n_points, 2]
-            top_weights, top_idx = weights_flat.topk(30, dim=2)      # [B, Q, 30], [B, Q, 30]
-            weights_keep = torch.gather(weights_flat, 2, top_idx)    # [B, Q, 30]
-            samples_keep = torch.gather(samples_flat, 2, top_idx.unsqueeze(-1).repeat(1, 1, 1, 2))  # [B, Q, 30, 2]
+            weights_flat = attention_weights.view(N, Len_q, -1)
+            samples_flat = sampling_locations.view(N, Len_q, -1, 2)
+            top_weights, top_idx = weights_flat.topk(30, dim=2)
+            weights_keep = torch.gather(weights_flat, 2, top_idx)
+            samples_keep = torch.gather(samples_flat, 2, top_idx.unsqueeze(-1).repeat(1, 1, 1, 2))
 
-            # hack implementation for iterative bounding box refinement
             if self.bbox_embed is not None:
                 tmp = self.bbox_embed[lid](output)
                 if reference_points.shape[-1] == 4:

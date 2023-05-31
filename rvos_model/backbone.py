@@ -44,8 +44,7 @@ class FrozenBatchNorm2d(torch.nn.Module):
             missing_keys, unexpected_keys, error_msgs)
 
     def forward(self, x):
-        # move reshapes to the beginning
-        # to make it fuser-friendly
+
         w = self.weight.reshape(1, -1, 1, 1)
         b = self.bias.reshape(1, -1, 1, 1)
         rv = self.running_var.reshape(1, -1, 1, 1)
@@ -65,7 +64,7 @@ class BackboneBase(nn.Module):
                 parameter.requires_grad_(False)
         if return_interm_layers:
             return_layers = {"layer1": "0", "layer2": "1", "layer3": "2", "layer4": "3"}
-            # return_layers = {"layer2": "0", "layer3": "1", "layer4": "2"} deformable detr
+
             self.strides = [4, 8, 16, 32]
             self.num_channels = [256, 512, 1024, 2048]
         else:
@@ -110,21 +109,14 @@ class Joiner(nn.Sequential):
     def forward(self, tensor_list: NestedTensor):
         temp_tensor_list = NestedTensor(rearrange(tensor_list.tensors, 'b t c h w -> (b t) c h w'),
                                         rearrange(tensor_list.mask, 'b t h w -> (b t) h w'))
-        # temp_tensor_list.tensors = rearrange(tensor_list.tensors, 'b t c h w -> (b t) c h w')
-        # temp_tensor_list.mask = rearrange(tensor_list.mask, 'b t h w -> (b t) h w')
-        # tensor_list.tensors = rearrange(tensor_list.tensors, 'b t c h w -> (b t) c h w')
-        # tensor_list.mask = rearrange(tensor_list.mask, 'b t h w -> (b t) h w')
-        # b, t, _, _, _ = tensor_list.tensors.shape
-        # xs = self[0](tensor_list)  # backbone的输出
+
         xs = self[0](temp_tensor_list)
         out: List[NestedTensor] = []
         pos = []
         for name, x in xs.items():
             out.append(x)
-            # position encoding
             pos.append(self[1](x).to(x.tensors.dtype))
-        # tensor_list.tensors = rearrange(tensor_list.tensors, '(b t) c h w ->b t c h w ', b=b, t =t)
-        # tensor_list.mask = rearrange(tensor_list.mask, '(b t) c h w ->b t c h w ')
+
         return out, pos
 
 

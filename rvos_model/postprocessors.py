@@ -1,4 +1,4 @@
-# Copyright (c) Aishwarya Kamath & Nicolas Carion. Licensed under the Apache License 2.0. All Rights Reserved
+
 """Postprocessors class to transform MDETR output according to the downstream task"""
 from typing import Dict
 
@@ -29,21 +29,20 @@ class A2DSentencesPostProcess(nn.Module):
             NOTE: the max_padding_size is 4x out_masks.shape[-2:]
         """
         assert len(orig_target_sizes) == len(max_target_sizes)
-        
-        # there is only one valid frames, thus T=1
-        out_logits = outputs['pred_logits'][:, 0, :, 0]  # [B, T, N, 1] -> [B, N]
-        out_masks = outputs['pred_masks'][:, 0, :, :, :] # [B, T, N, out_h, out_w] -> [B, N, out_h, out_w]
+
+        out_logits = outputs['pred_logits'][:, 0, :, 0]
+        out_masks = outputs['pred_masks'][:, 0, :, :, :]
         out_h, out_w = out_masks.shape[-2:]
 
         scores = out_logits.sigmoid()
-        pred_masks = F.interpolate(out_masks, size=(out_h*4, out_w*4), mode="bilinear", align_corners=False) # [B, N, H, W]
-        pred_masks = (pred_masks.sigmoid() > 0.5) # [B, N, H, W]
+        pred_masks = F.interpolate(out_masks, size=(out_h*4, out_w*4), mode="bilinear", align_corners=False)
+        pred_masks = (pred_masks.sigmoid() > 0.5)
         processed_pred_masks, rle_masks = [], []
-        # for each batch
+
         for f_pred_masks, resized_size, orig_size in zip(pred_masks, max_target_sizes, orig_target_sizes):
-            f_mask_h, f_mask_w = resized_size  # resized shape without padding
-            f_pred_masks_no_pad = f_pred_masks[:, :f_mask_h, :f_mask_w].unsqueeze(1)  # remove the samples' padding
-            # resize the samples back to their original dataset (target) size for evaluation
+            f_mask_h, f_mask_w = resized_size
+            f_pred_masks_no_pad = f_pred_masks[:, :f_mask_h, :f_mask_w].unsqueeze(1)
+
             f_pred_masks_processed = F.interpolate(f_pred_masks_no_pad.float(), size=tuple(orig_size.tolist()), mode="nearest")
             f_pred_rle_masks = [mask_util.encode(np.array(mask[0, :, :, np.newaxis], dtype=np.uint8, order="F"))[0]
                                 for mask in f_pred_masks_processed.cpu()]
@@ -54,7 +53,7 @@ class A2DSentencesPostProcess(nn.Module):
         return predictions
 
 
-# PostProcess for pretraining
+
 class PostProcess(nn.Module):
     """ This module converts the model's output into the format expected by the coco api"""
 
@@ -73,28 +72,26 @@ class PostProcess(nn.Module):
 
         assert len(out_logits) == len(target_sizes)
         assert target_sizes.shape[1] == 2
-        
-        # coco, num_frames=1
+
         out_logits = outputs["pred_logits"].flatten(1, 2)
         out_boxes = outputs["pred_boxes"].flatten(1, 2)
         bs, num_queries = out_logits.shape[:2]
 
-        prob = out_logits.sigmoid() # [bs, num_queries, num_classes]
+        prob = out_logits.sigmoid()
         topk_values, topk_indexes = torch.topk(prob.view(out_logits.shape[0], -1), k=num_queries, dim=1, sorted=True) 
-        scores = topk_values # [bs, num_queries]
-        topk_boxes = topk_indexes // out_logits.shape[2] # [bs, num_queries]
-        labels = topk_indexes % out_logits.shape[2] # [bs, num_queries]
+        scores = topk_values
+        topk_boxes = topk_indexes // out_logits.shape[2]
+        labels = topk_indexes % out_logits.shape[2]
 
-        boxes = box_ops.box_cxcywh_to_xyxy(out_boxes) # [bs, num_queries, 4]
+        boxes = box_ops.box_cxcywh_to_xyxy(out_boxes)
         boxes = torch.gather(boxes, 1, topk_boxes.unsqueeze(-1).repeat(1,1,4))
 
-        # and from relative [0, 1] to absolute [0, height] coordinates
         img_h, img_w = target_sizes.unbind(1)
         scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1)
-        boxes = boxes * scale_fct[:, None, :] # [bs, num_queries, 4]
+        boxes = boxes * scale_fct[:, None, :]
 
         assert len(scores) == len(labels) == len(boxes)
-        # binary for the pretraining
+
         results = [{"scores": s, "labels": torch.ones_like(l), "boxes": b} for s, l, b in zip(scores, labels, boxes)]
 
         return results
@@ -131,16 +128,14 @@ class PostProcessSegm(nn.Module):
 
         prob = out_logits.sigmoid()
         topk_values, topk_indexes = torch.topk(prob.view(out_logits.shape[0], -1), k=num_queries, dim=1, sorted=True) 
-        scores = topk_values # [bs, num_queries]
-        topk_boxes = topk_indexes // out_logits.shape[2] # [bs, num_queries]
-        labels = topk_indexes % out_logits.shape[2] # [bs, num_queries]
+        scores = topk_values
+        topk_boxes = topk_indexes // out_logits.shape[2]
+        labels = topk_indexes % out_logits.shape[2]
 
-        outputs_masks = [out_m[topk_boxes[i]].unsqueeze(0) for i, out_m, in enumerate(out_masks)] # list[Tensor]
-        outputs_masks = torch.cat(outputs_masks, dim=0) # [bs, num_queries, H, W]
+        outputs_masks = [out_m[topk_boxes[i]].unsqueeze(0) for i, out_m, in enumerate(out_masks)]
+        outputs_masks = torch.cat(outputs_masks, dim=0)
         out_h, out_w = outputs_masks.shape[-2:]
 
-        # max_h, max_w = max_target_sizes.max(0)[0].tolist() 
-        # outputs_masks = F.interpolate(outputs_masks, size=(max_h, max_w), mode="bilinear", align_corners=False)
         outputs_masks = F.interpolate(outputs_masks, size=(out_h*4, out_w*4), mode="bilinear", align_corners=False)
         outputs_masks = (outputs_masks.sigmoid() > self.threshold).cpu()
 
@@ -159,7 +154,7 @@ def build_postprocessors(args, dataset_name):
     if dataset_name == 'a2d' or dataset_name == 'jhmdb':
         postprocessors = A2DSentencesPostProcess(threshold=args.threshold)
     else:
-        # for coco pretrain postprocessor
+
         postprocessors: Dict[str, nn.Module] = {"bbox": PostProcess()}
         if args.masks:
             postprocessors["segm"] = PostProcessSegm(threshold=args.threshold)

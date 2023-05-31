@@ -24,7 +24,7 @@ from .position_encoding import PositionEmbeddingSine1D
 
 BN_MOMENTUM = 0.1
 
-def get_norm(norm, out_channels): # only support GN or LN
+def get_norm(norm, out_channels):
     """
     Args:
         norm (str or callable): either one of BN, SyncBN, FrozenBN, GN;
@@ -68,15 +68,15 @@ class Conv2d(torch.nn.Conv2d):
         self.activation = activation
 
     def forward(self, x):
-        # torchscript does not support SyncBatchNorm yet
-        # https://github.com/pytorch/pytorch/issues/40507
-        # and we skip these codes in torchscript since:
-        # 1. currently we only support torchscript in evaluation mode
-        # 2. features needed by exporting module to torchscript are added in PyTorch 1.6 or
-        # later version, `Conv2d` in these PyTorch versions has already supported empty inputs.
+
+
+
+
+
+
         if not torch.jit.is_scripting():
             if x.numel() == 0 and self.training:
-                # https://github.com/pytorch/pytorch/issues/12013
+
                 assert not isinstance(
                     self.norm, torch.nn.SyncBatchNorm
                 ), "SyncBatchNorm does not support empty inputs!"
@@ -90,7 +90,7 @@ class Conv2d(torch.nn.Conv2d):
             x = self.activation(x)
         return x
 
-# FPN structure
+
 class CrossModalFPNDecoder(nn.Module):
     def __init__(self, feature_channels: List, conv_dim: int, mask_dim: int, dim_feedforward: int = 2048, norm=None):
         """
@@ -110,7 +110,7 @@ class CrossModalFPNDecoder(nn.Module):
 
         use_bias = norm == ""
         for idx, in_channels in enumerate(feature_channels):
-            # in_channels: 4x -> 32x
+
             lateral_norm = get_norm(norm, conv_dim)
             output_norm = get_norm(norm, conv_dim)
 
@@ -136,8 +136,8 @@ class CrossModalFPNDecoder(nn.Module):
             lateral_convs.append(lateral_conv)
             output_convs.append(output_conv)
             
-        # Place convs into top-down order (from low to high resolution)
-        # to make the top-down computation in forward clearer.
+
+
         self.lateral_convs = lateral_convs[::-1]
         self.output_convs = output_convs[::-1]
 
@@ -151,11 +151,10 @@ class CrossModalFPNDecoder(nn.Module):
         )
         weight_init.c2_xavier_fill(self.mask_features)
 
-        # vision-language cross-modal fusion
         self.text_pos = PositionEmbeddingSine1D(conv_dim, normalize=True)
         sr_ratios = [8, 4, 2, 1]
         cross_attns = []
-        for idx in range(len(feature_channels)): # res2 -> res5
+        for idx in range(len(feature_channels)):
             cross_attn = VisionLanguageBlock(conv_dim, dim_feedforward=dim_feedforward,
                                              nhead=8, sr_ratio=sr_ratios[idx])
             for p in cross_attn.parameters():
@@ -164,17 +163,17 @@ class CrossModalFPNDecoder(nn.Module):
             stage = int(idx + 1)
             self.add_module("cross_attn_{}".format(stage), cross_attn)
             cross_attns.append(cross_attn)
-        # place cross-attn in top-down order (from low to high resolution)
+
         self.cross_attns = cross_attns[::-1]
 
 
     def forward_features(self, features, text_features, poses, memory, nf):
-        # nf: num_frames
-        text_pos = self.text_pos(text_features).permute(2, 0, 1)   # [length, batch_size, c]  
+
+        text_pos = self.text_pos(text_features).permute(2, 0, 1)
         text_features, text_masks = text_features.decompose()      
         text_features = text_features.permute(1, 0, 2)   
 
-        for idx, (mem, f, pos) in enumerate(zip(memory[::-1], features[1:][::-1], poses[1:][::-1])): # 32x -> 8x
+        for idx, (mem, f, pos) in enumerate(zip(memory[::-1], features[1:][::-1], poses[1:][::-1])):
             lateral_conv = self.lateral_convs[idx]
             output_conv = self.output_convs[idx]
             cross_attn = self.cross_attns[idx]
@@ -184,8 +183,7 @@ class CrossModalFPNDecoder(nn.Module):
             b = n // nf
             t = nf
 
-            # NOTE: here the (h, w) is the size for current fpn layer
-            vision_features = lateral_conv(mem)  # [b*t, c, h, w]
+            vision_features = lateral_conv(mem)
             vision_features = rearrange(vision_features, '(b t) c h w -> (t h w) b c', b=b, t=t)
             vision_pos = rearrange(pos, '(b t) c h w -> (t h w) b c', b=b, t=t)
             vision_masks = rearrange(x_mask, '(b t) h w -> b (t h w)', b=b, t=t)
@@ -197,19 +195,19 @@ class CrossModalFPNDecoder(nn.Module):
                                  memory_key_padding_mask=text_masks,
                                  pos=text_pos,
                                  query_pos=vision_pos
-            ) # [t*h*w, b, c]
+            )
             cur_fpn = rearrange(cur_fpn, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
 
-            # upsample
-            if idx == 0: # top layer
+
+            if idx == 0:
                 y = output_conv(cur_fpn)
             else:
-                # Following FPN implementation, we use nearest upsampling here
+
                 y = cur_fpn + F.interpolate(y, size=cur_fpn.shape[-2:], mode="nearest")
-                # y = cur_fpn + F.interpolate(y, size=cur_fpn.shape[-2:], mode='bilinear', align_corners=True)
+
                 y = output_conv(y)
         
-        # 4x level
+
         lateral_conv = self.lateral_convs[-1]
         output_conv = self.output_convs[-1]
         cross_attn = self.cross_attns[-1]
@@ -220,7 +218,7 @@ class CrossModalFPNDecoder(nn.Module):
         b = n // nf
         t = nf
 
-        vision_features = lateral_conv(x)  # [b*t, c, h, w]
+        vision_features = lateral_conv(x)
         vision_features = rearrange(vision_features, '(b t) c h w -> (t h w) b c', b=b, t=t)
         vision_pos = rearrange(pos, '(b t) c h w -> (t h w) b c', b=b, t=t)
         vision_masks = rearrange(x_mask, '(b t) h w -> b (t h w)', b=b, t=t)
@@ -232,13 +230,13 @@ class CrossModalFPNDecoder(nn.Module):
                              memory_key_padding_mask=text_masks,
                              pos=text_pos,
                              query_pos=vision_pos
-        ) # [t*h*w, b, c]
+        )
         cur_fpn = rearrange(cur_fpn, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
-        # Following FPN implementation, we use nearest upsampling here
+
         y = cur_fpn + F.interpolate(y, size=cur_fpn.shape[-2:], mode="nearest")
-        # y = cur_fpn + F.interpolate(y, size=cur_fpn.shape[-2:], mode='bilinear', align_corners=True)
+
         y = output_conv(y)
-        return y   # [b*t, c, h, w], the spatial stride is 4x
+        return y
 
     def forward(self, features, text_features, pos, memory, nf):
         """The forward function receives the vision and language features, 
@@ -267,7 +265,7 @@ class VisionLanguageBlock(nn.Module):
         super().__init__()
         self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         self.multihead_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        # Implementation of Feedforward model
+
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.dropout = nn.Dropout(dropout)
         self.linear2 = nn.Linear(dim_feedforward, d_model)
@@ -282,7 +280,7 @@ class VisionLanguageBlock(nn.Module):
         self.activation = _get_activation_fn(activation)
         self.normalize_before = normalize_before
 
-        # for downsample
+
         self.sr_ratio = sr_ratio
 
     def with_pos_embed(self, tensor, pos: Optional[Tensor]):
@@ -294,40 +292,39 @@ class VisionLanguageBlock(nn.Module):
                      pos: Optional[Tensor] = None,
                      query_pos: Optional[Tensor] = None):
         b = tgt.size(1)
-        # self attn
+
         q = k = self.with_pos_embed(tgt, query_pos)
-        if self.sr_ratio > 1: # downsample
+        if self.sr_ratio > 1:
             q = rearrange(q, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
             k = rearrange(k, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
             v = rearrange(tgt, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
-            # downsample
+
             new_h = int(h * 1./self.sr_ratio)
             new_w = int(w * 1./self.sr_ratio)
             size = (new_h, new_w)
             q = F.interpolate(q, size=size, mode='nearest')
             k = F.interpolate(k, size=size, mode='nearest')
             v = F.interpolate(v, size=size, mode='nearest')
-            # shape for transformer
+
             q = rearrange(q, '(b t) c h w -> (t h w) b c', t=t)
             k = rearrange(k, '(b t) c h w -> (t h w) b c', t=t)
             v = rearrange(v, '(b t) c h w -> (t h w) b c', t=t)
-            # downsample mask
+
             tgt_key_padding_mask = tgt_key_padding_mask.reshape(b*t, h, w)
             tgt_key_padding_mask = F.interpolate(tgt_key_padding_mask[None].float(), size=(new_h, new_w), mode='nearest').bool()[0] 
             tgt_key_padding_mask = tgt_key_padding_mask.reshape(b, t, new_h, new_w).flatten(1)
         else:
             v = tgt
         tgt2 = self.self_attn(q, k, value=v, attn_mask=None,
-                              key_padding_mask=tgt_key_padding_mask)[0] # [H*W, B*T, C]
+                              key_padding_mask=tgt_key_padding_mask)[0]
         if self.sr_ratio > 1:
             tgt2 = rearrange(tgt2, '(t h w) b c -> (b t) c h w', t=t, h=new_h, w=new_w)
-            size = (h, w)  # recover to origin size
-            tgt2 = F.interpolate(tgt2, size=size, mode='bilinear', align_corners=False) # [B*T, C, H, W]
+            size = (h, w)
+            tgt2 = F.interpolate(tgt2, size=size, mode='bilinear', align_corners=False)
             tgt2 = rearrange(tgt2, '(b t) c h w -> (t h w) b c', t=t)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
 
-        # cross attn
         tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt, query_pos),
                                    key=self.with_pos_embed(memory, pos),
                                    value=memory, attn_mask=None,
@@ -335,7 +332,6 @@ class VisionLanguageBlock(nn.Module):
         tgt = tgt + self.dropout2(tgt2)
         tgt = self.norm2(tgt)
 
-        # ffn
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
         tgt = tgt + self.dropout3(tgt2)
         tgt = self.norm3(tgt)
@@ -347,40 +343,39 @@ class VisionLanguageBlock(nn.Module):
                     pos: Optional[Tensor] = None,
                     query_pos: Optional[Tensor] = None):
         b = tgt.size(1)
-        # self attn
+
         tgt2 = self.norm1(tgt)
         q = k = self.with_pos_embed(tgt2, query_pos)
-        if self.sr_ratio > 1: # downsample
+        if self.sr_ratio > 1:
             q = rearrange(q, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
             k = rearrange(k, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
             v = rearrange(tgt, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
-            # downsample
+
             new_h = int(h * 1./self.sr_ratio)
             new_w = int(w * 1./self.sr_ratio)
             size = (new_h, new_w)
             q = F.interpolate(q, size=size, mode='nearest')
             k = F.interpolate(k, size=size, mode='nearest')
             v = F.interpolate(v, size=size, mode='nearest')
-            # shape for transformer
             q = rearrange(q, '(b t) c h w -> (t h w) b c', t=t)
             k = rearrange(k, '(b t) c h w -> (t h w) b c', t=t)
             v = rearrange(v, '(b t) c h w -> (t h w) b c', t=t)
-            # downsample mask
+
             tgt_key_padding_mask = tgt_key_padding_mask.reshape(b*t, h, w)
             tgt_key_padding_mask = F.interpolate(tgt_key_padding_mask[None].float(), size=(new_h, new_w), mode='nearest').bool()[0] 
             tgt_key_padding_mask = tgt_key_padding_mask.reshape(b, t, new_h, new_w).flatten(1)
         else:
             v = tgt2
         tgt2 = self.self_attn(q, k, value=v, attn_mask=None,
-                              key_padding_mask=tgt_key_padding_mask)[0] # [T*H*W, B, C]
+                              key_padding_mask=tgt_key_padding_mask)[0]
         if self.sr_ratio > 1:
             tgt2 = rearrange(tgt2, '(t h w) b c -> (b t) c h w', t=t, h=new_h, w=new_w)
-            size = (h, w)  # recover to origin size
-            tgt2 = F.interpolate(tgt2, size=size, mode='bilinear', align_corners=False) # [B*T, C, H, W]
+            size = (h, w)
+            tgt2 = F.interpolate(tgt2, size=size, mode='bilinear', align_corners=False)
             tgt2 = rearrange(tgt2, '(b t) c h w -> (t h w) b c', t=t)
         tgt = tgt + self.dropout1(tgt2)
 
-        # cross attn
+
         tgt2 = self.norm2(tgt)
         tgt2 = self.multihead_attn(query=self.with_pos_embed(tgt2, query_pos),
                                    key=self.with_pos_embed(memory, pos),
@@ -388,7 +383,7 @@ class VisionLanguageBlock(nn.Module):
                                    key_padding_mask=memory_key_padding_mask)[0]
         tgt = tgt + self.dropout2(tgt2)
 
-        # ffn
+
         tgt2 = self.norm3(tgt)
         tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt2))))
         tgt = tgt + self.dropout3(tgt2)

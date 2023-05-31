@@ -29,16 +29,12 @@ from datasets.ytvos_2exp import build_yt_vos
 def main(args):
     args.masks = True
     utils.init_distributed_mode(args)
-
     print("git:\n  {}\n".format(utils.get_sha()))
     print(args)
-
     print(f'\n Run on {args.dataset_file} dataset.')
     print('\n')
-
     device = torch.device(args.device)
 
-    # fix the seed for reproducibility
     args.distributed = False
     seed = args.seed
     torch.manual_seed(seed)
@@ -107,8 +103,6 @@ def main(args):
     data_loader_train = DataLoader(dataset_train, batch_size=1, num_workers=0, collate_fn=utils.collate_fn)
 
 
-    # for Mini-Ref-Youtube-VOS
-    # finetune using the pretrained weights on Ref-COCO
     if args.dataset_file != "davis" and args.dataset_file != "jhmdb" and args.pretrained_weights is not None:
         print("============================================>")
         print("Load pretrained weights from {} ...".format(args.pretrained_weights))
@@ -139,7 +133,7 @@ def main(args):
                 pg['initial_lr'] = pg_old['initial_lr']
             print(optimizer.param_groups)
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-            # todo: this is a hack for doing experiment that resume from checkpoint and also modify lr scheduler (e.g., decrease lr in advance).
+
             args.override_resumed_lr_drop = True
             if args.override_resumed_lr_drop:
                 print(
@@ -148,7 +142,6 @@ def main(args):
                 lr_scheduler.base_lrs = list(map(lambda group: group['initial_lr'], optimizer.param_groups))
             lr_scheduler.step(lr_scheduler.last_epoch)
             args.start_epoch = checkpoint['epoch'] + 1
-
 
     print("Start training")
     start_time = time.time()
@@ -161,8 +154,7 @@ def main(args):
         lr_scheduler.step()
         if args.output_dir:
             checkpoint_paths = [output_dir / 'checkpoint.pth']
-            # extra checkpoint before LR drop and every epochs
-            # if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 1 == 0:
+
             if (epoch + 1) % 1 == 0:
                 checkpoint_paths.append(output_dir / f'checkpoint{epoch:04}.pth')
             for checkpoint_path in checkpoint_paths:

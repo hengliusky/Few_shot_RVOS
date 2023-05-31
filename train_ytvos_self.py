@@ -4,7 +4,6 @@ Training script of ReferFormer
 Modified from DETR (https://github.com/facebookresearch/detr)
 """
 import os
-
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 from util.Logger import TreeEvaluation as Evaluation, TimeRecord, LogTime, Tee, Loss_record
 import argparse
@@ -32,22 +31,16 @@ def main(args):
     args.masks = True
     args.use_dab = False
     utils.init_distributed_mode(args)
-
     print("git:\n  {}\n".format(utils.get_sha()))
     print(args)
-
     print(f'\n Run on {args.dataset_file} dataset.')
     print('\n')
-
     device = torch.device(args.device)
-
-    # fix the seed for reproducibility
     args.distributed = False
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-
     model, criterion, postprocessor = few_build_model4(args)
     model.to(device)
 
@@ -55,9 +48,6 @@ def main(args):
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module
-
-    # for n, p in model_without_ddp.named_parameters():
-    #     print(n)
 
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
@@ -99,14 +89,9 @@ def main(args):
                                   weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, args.lr_drop)
 
-    # no validation ground truth for ytvos dataset
-    # dataset_train = build_dataset(args.dataset_file, image_set='train', args=args)
-    # dataset_train = SAILVOSDataset(train=False, query_frame=5, support_frame=5)
     print(args.dataset_file)
     data_path=args.data_path
-    # dataset_train = YTVOSDataset(query_frame=5, support_frame=5,
-    #                             sample_per_class=args.sample_per_class,
-    #                             set_index=args.group)
+
     dataset_train = build_yt_vos('train', data_path, set_index=args.group, support_frames=5, query_frames=5, sample_per_class=args.sample_per_class)
     if args.distributed:
         if args.cache_mode:
@@ -116,16 +101,11 @@ def main(args):
     else:
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    # batch_sampler_train = torch.utils.data.BatchSampler(
-    #     sampler_train, args.batch_size, drop_last=True)
     data_loader_train = DataLoader(dataset_train, batch_size=1, num_workers=0, collate_fn=utils.collate_fn)
-    # data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train,
-    #                                collate_fn=utils.collate_fn, num_workers=args.num_workers)
+
     test_list = dataset_train.get_class_list()
     test_evaluations = Evaluation(class_list=test_list)
 
-    # for Ref-Youtube-VOS and A2D-Sentences
-    # finetune using the pretrained weights on Ref-COCO
     if args.dataset_file != "davis" and args.dataset_file != "jhmdb" and args.pretrained_weights is not None:
         print("============================================>")
         print("Load pretrained weights from {} ...".format(args.pretrained_weights))
@@ -133,7 +113,7 @@ def main(args):
         checkpoint_dict = pre_trained_model_to_finetune(checkpoint, args)
         model_without_ddp.load_state_dict(checkpoint_dict, strict=False)
         print("============================================>")
-    # output_dir = Path(args.output_dir)
+
     output_dir = os.path.join(args.output_dir, 'group_%d' % args.group)
     output_dir = Path(output_dir)
     if args.resume:
@@ -157,7 +137,7 @@ def main(args):
                 pg['initial_lr'] = pg_old['initial_lr']
             print(optimizer.param_groups)
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-            # todo: this is a hack for doing experiment that resume from checkpoint and also modify lr scheduler (e.g., decrease lr in advance).
+
             args.override_resumed_lr_drop = True
             if args.override_resumed_lr_drop:
                 print(
@@ -179,8 +159,7 @@ def main(args):
         lr_scheduler.step()
         if args.output_dir:
             checkpoint_paths = [output_dir / 'checkpoint.pth']
-            # extra checkpoint before LR drop and every epochs
-            # if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 1 == 0:
+
             if (epoch + 1) % 1 == 0:
                 checkpoint_paths.append(output_dir / f'checkpoint{epoch:04}.pth')
             for checkpoint_path in checkpoint_paths:

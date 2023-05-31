@@ -31,11 +31,11 @@ def _get_global_gloo_group():
     return dist.group.WORLD
 
 
-# needed due to empty tensor bug in pytorch and torchvision 0.5
+
 import torchvision
-# if float(torchvision.__version__[:3]) < 0.7:
-#     from torchvision.ops import _new_empty_tensor
-#     from torchvision.ops.misc import _output_size
+
+
+
 
 
 class SmoothedValue(object):
@@ -99,7 +99,7 @@ class SmoothedValue(object):
             max=self.max,
             value=self.value)
 
-# copy-paste from mdetr: https://github.com/ashkamath/mdetr/blob/main/util/dist.py
+
 def all_gather(data):
     """
     Run all_gather on arbitrary picklable data (not necessarily tensors)
@@ -123,7 +123,7 @@ def all_gather(data):
     device = "cuda" if cpu_group is None else "cpu"
     tensor = torch.ByteTensor(data_view).to(device)
 
-    # obtain Tensor size of each rank
+
     local_size = torch.tensor([tensor.numel()], device=device, dtype=torch.long)
     size_list = [torch.tensor([0], device=device, dtype=torch.long) for _ in range(world_size)]
     if cpu_group is None:
@@ -136,9 +136,9 @@ def all_gather(data):
     assert isinstance(local_size.item(), int)
     local_size = int(local_size.item())
 
-    # receiving Tensor from all ranks
-    # we pad the tensor because torch all_gather does not support
-    # gathering tensors of different shapes
+
+
+
     tensor_list = []
     for _ in size_list:
         tensor_list.append(torch.empty((max_size,), dtype=torch.uint8, device=device))
@@ -174,7 +174,7 @@ def reduce_dict(input_dict, average=True):
     with torch.no_grad():
         names = []
         values = []
-        # sort the keys so that they are consistent across processes
+
         for k in sorted(input_dict.keys()):
             names.append(k)
             values.append(input_dict[k])
@@ -297,50 +297,50 @@ def get_sha():
 
 
 def collate_fn(batch):
-    # batch: imgs, targets
+
     batch = list(zip(*batch)) 
     batch[0] = nested_tensor_from_videos_list(batch[0], size_divisibility=32)
     batch[2] = nested_tensor_from_videos_list(batch[2], size_divisibility=32)
-    # batch[0]: samples: NestedTensor(tensor, mask)
-    #           tensor: [B, T, C, H, W], mask: [B, T, H, W]
-    # batch[1]: targets: list[dict]
+
+
+
     return tuple(batch) 
 
 def collate_fn1(batch):
-    # batch: imgs, targets
+
     batch = list(zip(*batch))
     batch[0] = nested_tensor_from_videos_list(batch[0], size_divisibility=32)
-    # batch[2] = nested_tensor_from_videos_list(batch[2], size_divisibility=32)
-    # batch[0]: samples: NestedTensor(tensor, mask)
-    #           tensor: [B, T, C, H, W], mask: [B, T, H, W]
-    # batch[1]: targets: list[dict]
+
+
+
+
     return tuple(batch)
 
 def collate_fn2(batch):
-    # batch: imgs, targets
+
     batch = list(zip(*batch))
     batch[0] = nested_tensor_from_videos_list(batch[0], size_divisibility=1)
     batch[2] = nested_tensor_from_videos_list(batch[2], size_divisibility=1)
-    # batch[0]: samples: NestedTensor(tensor, mask)
-    #           tensor: [B, T, C, H, W], mask: [B, T, H, W]
-    # batch[1]: targets: list[dict]
+
+
+
     return tuple(batch)
 
 
 def collate_fn3(batch):
-    # batch: imgs, targets
+
     batch = list(zip(*batch))
     batch[0] = nested_tensor_from_videos_list(batch[0], size_divisibility=1)
-    # batch[2] = nested_tensor_from_videos_list(batch[2], size_divisibility=32)
-    # batch[0]: samples: NestedTensor(tensor, mask)
-    #           tensor: [B, T, C, H, W], mask: [B, T, H, W]
-    # batch[1]: targets: list[dict]
+
+
+
+
     return tuple(batch)
 
 def _max_by_axis(the_list):
-    # type: (List[List[int]]) -> List[int]
+
     maxes = the_list[0]
-    for sublist in the_list[1:]: # (C, H, W)
+    for sublist in the_list[1:]:
         for index, item in enumerate(sublist):
             maxes[index] = max(maxes[index], item)
     return maxes
@@ -351,24 +351,24 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor], size_divisibility=
     This function receives a list of image tensors and returns a NestedTensor of the padded images, along with their
     padding masks (true for padding areas, false otherwise).
     """
-    # TODO make this more general
-    # if image tensor is stacked as [T*3, H, W], then use split
+
+
     if split:
         tensor_list = [tensor.split(3,dim=0) for tensor in tensor_list] 
         tensor_list = [item for sublist in tensor_list for item in sublist] 
-        # list[tensor], length = batch_size x time
+
 
     if tensor_list[0].ndim == 3: 
-        # TODO make it support different-sized images
+
         max_size = _max_by_axis([list(img.shape) for img in tensor_list]) 
 
-        if size_divisibility > 1: # so that the mask dowmsample can be matched
+        if size_divisibility > 1:
             stride = size_divisibility
-            # the last two dims are [H, W], both subject to divisibility requirement
+
             max_size[-2] = (max_size[-2] + (stride - 1)) // stride * stride
             max_size[-1] = (max_size[-1] + (stride - 1)) // stride * stride
 
-        # min_size = tuple(min(s) for s in zip(*[img.shape for img in tensor_list]))
+
         batch_shape = [len(tensor_list)] + max_size 
         b, c, h, w = batch_shape 
         dtype = tensor_list[0].dtype
@@ -377,7 +377,7 @@ def nested_tensor_from_tensor_list(tensor_list: List[Tensor], size_divisibility=
         mask = torch.ones((b, h, w), dtype=torch.bool, device=device)
         for img, pad_img, m in zip(tensor_list, tensor, mask):
             pad_img[: img.shape[0], : img.shape[1], : img.shape[2]].copy_(img)
-            m[: img.shape[1], :img.shape[2]] = False # valid locations
+            m[: img.shape[1], :img.shape[2]] = False
     else:
         raise ValueError('not supported')
     return NestedTensor(tensor, mask)
@@ -390,9 +390,9 @@ def nested_tensor_from_videos_list(videos_list: List[Tensor], size_divisibility=
     """
     max_size = _max_by_axis([list(img.shape) for img in videos_list])
 
-    if size_divisibility > 1: # so that the mask dowmsample can be matched
+    if size_divisibility > 1:
         stride = size_divisibility
-        # the last two dims are [H, W], both subject to divisibility requirement
+
         max_size[-2] = (max_size[-2] + (stride - 1)) // stride * stride
         max_size[-1] = (max_size[-1] + (stride - 1)) // stride * stride
 
@@ -414,7 +414,7 @@ class NestedTensor(object):
         self.mask = mask
 
     def to(self, device):
-        # type: (Device) -> NestedTensor # noqa
+
         cast_tensor = self.tensors.to(device)
         mask = self.mask
         if mask is not None:
@@ -536,7 +536,7 @@ def accuracy(output, target, topk=(1,)):
 
 
 def interpolate(input, size=None, scale_factor=None, mode="nearest", align_corners=None):
-    # type: (Tensor, Optional[List[int]], Optional[float], str, Optional[bool]) -> Tensor
+
     """
     Equivalent to nn.functional.interpolate, but with support for empty batch sizes.
     This will eventually be supported natively by PyTorch, and this

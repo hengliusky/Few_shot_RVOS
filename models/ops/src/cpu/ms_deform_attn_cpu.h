@@ -8,8 +8,8 @@
 **************************************************************************************************
 */
 
-#pragma once
-#include <torch/extension.h>
+
+
 
 at::Tensor
 ms_deform_attn_cpu_forward(

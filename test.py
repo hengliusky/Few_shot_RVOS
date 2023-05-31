@@ -3,8 +3,6 @@
 Training script of ReferFormer
 Modified from DETR (https://github.com/facebookresearch/detr)
 """
-# import xlwt, xlrd
-# import xlutils.copy
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
@@ -21,9 +19,7 @@ import torch
 from torch.utils.data import DataLoader, DistributedSampler
 from PIL import Image
 import util.misc as utils
-
 from models import few_build_model2
-
 import torch.nn.functional as F
 import opts
 from datasets.sailvos_2exp import build_sail_vos
@@ -35,13 +31,12 @@ def main(args, rand):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    # torch.backends.cudnn.enabled = True
+
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
     args.masks = True
-    # args.use_dab = False
-    # args.dataset_file = 'mini-ytvos'
+
     args.binary = True
     args.with_box_refine = True
     args.freeze_text_encoder = True
@@ -49,26 +44,21 @@ def main(args, rand):
     print(f'\n Run on {args.dataset_file} dataset.')
     print('\n')
 
-
-
     print(args.dataset_file)
     save_dir = 'results'
 
-    # dataset settings
     data_path = args.data_path
     if args.dataset_file == 'sailvos':
         dataset_test, _ = build_sail_vos('test', data_path)
         save_path_prefix = os.path.join(save_dir, 'sailvosf', 'group_%d'%args.group)
-    # elif args.dataset_file == 'gygo':
-    #     dataset_test, _ = build_gygo_vos('test', data_path)
-    #     save_path_prefix = os.path.join(save_dir, 'gygof')
+
     else:
         dataset_test = build_yt_vos('test', data_path, set_index=args.group, support_frames=args.support_frames)
         save_path_prefix = os.path.join(save_dir, 'ytvosf', 'group_%d'%args.group)
 
     data_loader_test = DataLoader(dataset_test, batch_size=1, num_workers=0, collate_fn=utils.collate_fn2)
 
-    # test_list = dataset_test.get_class_list()
+
     test_list = [1]
     test_evaluations = Evaluation(class_list=test_list)
 
@@ -80,19 +70,18 @@ def main(args, rand):
     model1_without_ddp = model1
     n_parameters = sum(p.numel() for p in model1.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
-
     model_path = 'ytvos/r50-24-exp45/group_%d/checkpoint.pth'%(args.group)
     print(model_path)
     checkpoint = torch.load(model_path, map_location='cpu')
-    # checkpoint = torch.load('ytvos/r50-24/group_1_nodab/checkpoint.pth', map_location='cpu')
-    # checkpoint = torch.load('ytvos/r50-24-exp45/group_1/checkpoint.pth', map_location='cpu')
+
+
     missing_keys, unexpected_keys = model1_without_ddp.load_state_dict(checkpoint['model'], strict=False)
     unexpected_keys = [k for k in unexpected_keys if not (k.endswith('total_params') or k.endswith('total_ops'))]
     if len(missing_keys) > 0:
         print('Missing Keys: {}'.format(missing_keys))
     if len(unexpected_keys) > 0:
         print('Unexpected Keys: {}'.format(unexpected_keys))
-    # start inference
+
     model1.eval()
     print(len(data_loader_test))
     args.query_frame = 10
@@ -125,13 +114,13 @@ def main(args, rand):
                 query_mask = qsamples.mask[:, i * args.query_frame:]
                 q_samples = utils.NestedTensor(query_img, query_mask)
                 q_targets = {
-                    'labels': [t["labels"][i * args.query_frame:] for t in qtargets][0],  # [T,]
-                    'boxes': [t["boxes"][i * args.query_frame:] for t in qtargets][0],  # [T, 4], xyxy
-                    'masks': [t["masks"][i * args.query_frame:] for t in qtargets][0],  # [T, H, W]
-                    'valid': [t["valid"][i * args.query_frame:] for t in qtargets][0],  # [T,]
+                    'labels': [t["labels"][i * args.query_frame:] for t in qtargets][0],
+                    'boxes': [t["boxes"][i * args.query_frame:] for t in qtargets][0],
+                    'masks': [t["masks"][i * args.query_frame:] for t in qtargets][0],
+                    'valid': [t["valid"][i * args.query_frame:] for t in qtargets][0],
                     'orig_size': [t["orig_size"] for t in qtargets][0],
                     'size': [t["size"] for t in qtargets][0],
-                    # 'area': [t["area"][i * args.query_frame:] for t in targets]
+
                 }
                 mask = [t["masks"][i * args.query_frame:] for t in qtargets][0]
             else:
@@ -140,19 +129,19 @@ def main(args, rand):
                 q_samples = utils.NestedTensor(query_img, query_mask)
                 q_targets = {
                     'labels': [t["labels"][i * args.query_frame:(i + 1) * args.query_frame] for t in qtargets][0],
-                    # [T,]
+
                     'boxes': [t["boxes"][i * args.query_frame:(i + 1) * args.query_frame] for t in qtargets][0],
-                    # [T, 4], xyxy
+
                     'masks': [t["masks"][i * args.query_frame:(i + 1) * args.query_frame] for t in qtargets][0],
-                    # [T, H, W]
-                    'valid': [t["valid"][i * args.query_frame:(i + 1) * args.query_frame] for t in qtargets][0],  # [T,]
+
+                    'valid': [t["valid"][i * args.query_frame:(i + 1) * args.query_frame] for t in qtargets][0],
                     'orig_size': [t["orig_size"] for t in qtargets][0],
                     'size': [t["size"] for t in qtargets][0],
-                    # 'area': [t["area"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets]
+
                 }
                 mask = [t['masks'][i * args.query_frame:(i + 1) * args.query_frame] for t in qtargets][0]
             qqtargets = [q_targets]
-            # qtargets = list(qtargets)
+
 
             s_samples = ssamples
             s_captions = scaptions
@@ -164,23 +153,23 @@ def main(args, rand):
             pred_masks = outputs["pred_masks"][0]
             pred_ref_points = outputs["reference_points"][0]
             origin_h, origin_w = int(q_targets['size'][0]), int(q_targets['size'][1])
-            # len_frames, _, _ = mask.shape
+
             len_frames, origin_h1, origin_w1 = mask.shape
-            # according to pred_logits, select the query index
-            pred_scores = pred_logits.sigmoid()  # [t, q, k]
-            pred_scores = pred_scores.mean(0)  # [q, k]
-            max_scores, _ = pred_scores.max(-1)  # [q,]
-            _, max_ind = max_scores.max(-1)  # [1,]
+
+            pred_scores = pred_logits.sigmoid()
+            pred_scores = pred_scores.mean(0)
+            max_scores, _ = pred_scores.max(-1)
+            _, max_ind = max_scores.max(-1)
             max_inds = max_ind.repeat(len_frames)
-            pred_masks = pred_masks[range(len_frames), max_inds, ...]  # [t, h, w]
-            pred_masks = pred_masks.unsqueeze(0)  #
+            pred_masks = pred_masks[range(len_frames), max_inds, ...]
+            pred_masks = pred_masks.unsqueeze(0)
             mask = mask.unsqueeze(0)
             mask = F.interpolate(mask.float(), size=(origin_h, origin_w), mode='bilinear', align_corners=False)
             pred_masks = F.interpolate(pred_masks, size=(origin_h, origin_w), mode='bilinear', align_corners=False)
-            # mask = F.interpolate(mask.float(), size=(origin_h, origin_w), mode='nearest')
-            # pred_masks = F.interpolate(pred_masks, size=(origin_h, origin_w), mode='nearest')
+
+
             pred_masks = torch.nn.Sigmoid()(pred_masks)
-            # pred_masks = (pred_masks.sigmoid() > args.threshold).squeeze(0).detach().cpu().numpy()
+
             test_evaluations.update_evl(tuple([1]), mask, pred_masks)
             tmp_f += test_evaluations.tmp_f
             tmp_j += test_evaluations.tmp_j
@@ -217,11 +206,11 @@ def main(args, rand):
 
 
 def show1(pre_mask):
-    # img = Image.open(os.path.join('./', 'screenshot' + '.png'))
-    plt.figure("figure name screenshot")  # 图像窗口名称
+
+    plt.figure("figure name screenshot")
     plt.imshow(pre_mask)
-    plt.axis('on')  # 关掉坐标轴为off
-    plt.title('text title')  # 图像标题
+    plt.axis('on')
+    plt.title('text title')
     plt.show()
 
 
@@ -244,5 +233,5 @@ if __name__ == '__main__':
     print('group_%d_Averaged F on 5 seeds: %.4f' % (args.group, total_f / 5))
     print('*' * 32 + '\n')
 
-### python test.py --dataset_file mini-ytvos --group 1
+
 

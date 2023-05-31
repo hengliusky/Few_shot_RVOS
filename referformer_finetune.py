@@ -1,4 +1,4 @@
-#### Referformer:finetune
+
 """
 Training script of ReferFormer
 Modified from DETR (https://github.com/facebookresearch/detr)
@@ -38,10 +38,7 @@ def main(args):
     print('\n')
 
     device = torch.device(args.device)
-
-    # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
-    # args.distributed = False
     seed = args.seed
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -91,7 +88,7 @@ def main(args):
                                   weight_decay=args.weight_decay)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, args.lr_drop)
 
-    # dataset settings
+
     iterations = args.iterations_per_epoch
     shots = args.shots
     data_path = args.data_path
@@ -120,8 +117,6 @@ def main(args):
     test_list = [1]
     test_evaluations = Evaluation(class_list=test_list)
 
-    # for Ref-Youtube-VOS and A2D-Sentences
-    # finetune using the pretrained weights on Ref-COCO
     if args.dataset_file != "davis" and args.dataset_file != "jhmdb" and args.pretrained_weights is not None:
         print("============================================>")
         print("Load pretrained weights from {} ...".format(args.pretrained_weights))
@@ -152,7 +147,7 @@ def main(args):
                 pg['initial_lr'] = pg_old['initial_lr']
             print(optimizer.param_groups)
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
-            # todo: this is a hack for doing experiment that resume from checkpoint and also modify lr scheduler (e.g., decrease lr in advance).
+
             args.override_resumed_lr_drop = True
             if args.override_resumed_lr_drop:
                 print('Warning: (hack) args.override_resumed_lr_drop is set to True, so args.lr_drop would override lr_drop in resumed lr_scheduler.')
@@ -173,8 +168,6 @@ def main(args):
         lr_scheduler.step()
         if args.output_dir:
             checkpoint_paths = [output_dir / 'checkpoint.pth']
-            # extra checkpoint before LR drop and every epochs
-            # if (epoch + 1) % args.lr_drop == 0 or (epoch + 1) % 1 == 0:
             if (epoch + 1) % 1 == 0:
                 checkpoint_paths.append(output_dir / f'checkpoint{epoch:04}.pth')
             for checkpoint_path in checkpoint_paths:
@@ -185,16 +178,12 @@ def main(args):
                     'epoch': epoch,
                     'args': args,
                 }, checkpoint_path)
-
-
-
-
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
 
-    ###### test
-    # model
+
+
     model1, criterion, _ = build_model(args)
     device = args.device
     model1.to(device)
@@ -214,7 +203,7 @@ def main(args):
     if len(unexpected_keys) > 0:
         print('Unexpected Keys: {}'.format(unexpected_keys))
     
-    # start inference
+
     model1.eval()
     print(len(data_loader_test))
     args.query_frame = 20
@@ -235,13 +224,13 @@ def main(args):
                 query_mask = samples.mask[:, i * args.query_frame:]
                 qsamples = utils.NestedTensor(query_img, query_mask)
                 qtargets = {
-                    'labels': [t["labels"][i * args.query_frame:] for t in targets][0],  # [T,]
-                    'boxes': [t["boxes"][i * args.query_frame:] for t in targets][0],  # [T, 4], xyxy
-                    'masks': [t["masks"][i * args.query_frame:] for t in targets][0],  # [T, H, W]
-                    'valid': [t["valid"][i * args.query_frame:] for t in targets][0],  # [T,]
+                    'labels': [t["labels"][i * args.query_frame:] for t in targets][0],
+                    'boxes': [t["boxes"][i * args.query_frame:] for t in targets][0],
+                    'masks': [t["masks"][i * args.query_frame:] for t in targets][0],
+                    'valid': [t["valid"][i * args.query_frame:] for t in targets][0],
                     'orig_size': [t["orig_size"] for t in targets][0],
                     'size': [t["size"] for t in targets][0],
-                    # 'area': [t["area"][i * args.query_frame:] for t in targets]
+
                 }
                 mask = [t["masks"][i * args.query_frame:] for t in targets][0]
             else:
@@ -250,44 +239,44 @@ def main(args):
                 qsamples = utils.NestedTensor(query_img, query_mask)
                 qtargets = {
                     'labels': [t["labels"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
-                    # [T,]
+
                     'boxes': [t["boxes"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
-                    # [T, 4], xyxy
+
                     'masks': [t["masks"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
-                    # [T, H, W]
-                    'valid': [t["valid"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],  # [T,]
+
+                    'valid': [t["valid"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0],
                     'orig_size': [t["orig_size"] for t in targets][0],
                     'size': [t["size"] for t in targets][0],
-                    # 'area': [t["area"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets]
+
                 }
                 mask = [t["masks"][i * args.query_frame:(i + 1) * args.query_frame] for t in targets][0]
             qqtargets = [qtargets]
-            # qtargets = list(qtargets)
+
             with torch.no_grad():
                 outputs = model1(qsamples, captions, qqtargets)
-            # pred_masks = outputs["pred_masks"][0]  # F, 5 ,h,w
+
             pred_logits = outputs["pred_logits"][0]
             pred_boxes = outputs["pred_boxes"][0]
             pred_masks = outputs["pred_masks"][0]
             pred_ref_points = outputs["reference_points"][0]
             origin_h, origin_w = int(qtargets['size'][0]), int(qtargets['size'][1])
             len_frames, _, _ = mask.shape
-            # len_frames, origin_h, origin_w = mask.shape
-            # according to pred_logits, select the query index
-            pred_scores = pred_logits.sigmoid()  # [t, q, k]
-            pred_scores = pred_scores.mean(0)  # [q, k]
-            max_scores, _ = pred_scores.max(-1)  # [q,]
-            _, max_ind = max_scores.max(-1)  # [1,]
+
+
+            pred_scores = pred_logits.sigmoid()
+            pred_scores = pred_scores.mean(0)
+            max_scores, _ = pred_scores.max(-1)
+            _, max_ind = max_scores.max(-1)
             max_inds = max_ind.repeat(len_frames)
-            pred_masks = pred_masks[range(len_frames), max_inds, ...]  # [t, h, w]
-            pred_masks = pred_masks.unsqueeze(0)  #
+            pred_masks = pred_masks[range(len_frames), max_inds, ...]
+            pred_masks = pred_masks.unsqueeze(0)
             mask = mask.unsqueeze(0)
             mask = F.interpolate(mask.float(), size=(origin_h, origin_w), mode='bilinear', align_corners=False)
             pred_masks = F.interpolate(pred_masks, size=(origin_h, origin_w), mode='bilinear', align_corners=False)
             pred_masks = pred_masks.sigmoid()
-            # pred_masks = (pred_masks.sigmoid() > args.threshold).squeeze(0).detach().cpu().numpy()
+
             test_evaluations.update_evl(tuple([1]), mask, pred_masks)
-            # args.visualize = True
+
             if args.visualize:
                 save_path = os.path.join(save_path_prefix, str(vid[0]))
                 if not os.path.exists(save_path):
@@ -327,7 +316,7 @@ if __name__ == '__main__':
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)
 
-# ./scripts/referformer_finetune.sh sailvos/r50 pretrained_weights/ytvos_r50.pth --backbone resnet50
+
 
 
 

@@ -101,30 +101,27 @@ class WindowAttention3D(nn.Module):
 
         super().__init__()
         self.dim = dim
-        self.window_size = window_size  # Wd, Wh, Ww
+        self.window_size = window_size
         self.num_heads = num_heads
         head_dim = dim // num_heads
         self.scale = qk_scale or head_dim ** -0.5
 
-        # define a parameter table of relative position bias
         self.relative_position_bias_table = nn.Parameter(
-            torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1) * (2 * window_size[2] - 1), num_heads))  # 2*Wd-1 * 2*Wh-1 * 2*Ww-1, nH
+            torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1) * (2 * window_size[2] - 1), num_heads))
 
-        # get pair-wise relative position index for each token inside the window
         coords_d = torch.arange(self.window_size[0])
         coords_h = torch.arange(self.window_size[1])
         coords_w = torch.arange(self.window_size[2])
-        coords = torch.stack(torch.meshgrid(coords_d, coords_h, coords_w))  # 3, Wd, Wh, Ww
-        coords_flatten = torch.flatten(coords, 1)  # 3, Wd*Wh*Ww
-        relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]  # 3, Wd*Wh*Ww, Wd*Wh*Ww
-        relative_coords = relative_coords.permute(1, 2, 0).contiguous()  # Wd*Wh*Ww, Wd*Wh*Ww, 3
-        relative_coords[:, :, 0] += self.window_size[0] - 1  # shift to start from 0
+        coords = torch.stack(torch.meshgrid(coords_d, coords_h, coords_w))
+        coords_flatten = torch.flatten(coords, 1)
+        relative_coords = coords_flatten[:, :, None] - coords_flatten[:, None, :]
+        relative_coords = relative_coords.permute(1, 2, 0).contiguous()
+        relative_coords[:, :, 0] += self.window_size[0] - 1
         relative_coords[:, :, 1] += self.window_size[1] - 1
         relative_coords[:, :, 2] += self.window_size[2] - 1
-
         relative_coords[:, :, 0] *= (2 * self.window_size[1] - 1) * (2 * self.window_size[2] - 1)
         relative_coords[:, :, 1] *= (2 * self.window_size[2] - 1)
-        relative_position_index = relative_coords.sum(-1)  # Wd*Wh*Ww, Wd*Wh*Ww
+        relative_position_index = relative_coords.sum(-1)
         self.register_buffer("relative_position_index", relative_position_index)
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
@@ -143,15 +140,15 @@ class WindowAttention3D(nn.Module):
         """
         B_, N, C = x.shape
         qkv = self.qkv(x).reshape(B_, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
-        q, k, v = qkv[0], qkv[1], qkv[2]  # B_, nH, N, C
+        q, k, v = qkv[0], qkv[1], qkv[2]
 
         q = q * self.scale
         attn = q @ k.transpose(-2, -1)
 
         relative_position_bias = self.relative_position_bias_table[self.relative_position_index[:N, :N].reshape(-1)].reshape(
-            N, N, -1)  # Wd*Wh*Ww,Wd*Wh*Ww,nH
-        relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()  # nH, Wd*Wh*Ww, Wd*Wh*Ww
-        attn = attn + relative_position_bias.unsqueeze(0) # B_, nH, N, N
+            N, N, -1)
+        relative_position_bias = relative_position_bias.permute(2, 0, 1).contiguous()
+        attn = attn + relative_position_bias.unsqueeze(0)
 
         if mask is not None:
             nW = mask.shape[0]
@@ -217,28 +214,28 @@ class SwinTransformerBlock3D(nn.Module):
         window_size, shift_size = get_window_size((D, H, W), self.window_size, self.shift_size)
 
         x = self.norm1(x)
-        # pad feature maps to multiples of window size
+
         pad_l = pad_t = pad_d0 = 0
         pad_d1 = (window_size[0] - D % window_size[0]) % window_size[0]
         pad_b = (window_size[1] - H % window_size[1]) % window_size[1]
         pad_r = (window_size[2] - W % window_size[2]) % window_size[2]
         x = F.pad(x, (0, 0, pad_l, pad_r, pad_t, pad_b, pad_d0, pad_d1))
         _, Dp, Hp, Wp, _ = x.shape
-        # cyclic shift
+
         if any(i > 0 for i in shift_size):
             shifted_x = torch.roll(x, shifts=(-shift_size[0], -shift_size[1], -shift_size[2]), dims=(1, 2, 3))
             attn_mask = mask_matrix
         else:
             shifted_x = x
             attn_mask = None
-        # partition windows
-        x_windows = window_partition(shifted_x, window_size)  # B*nW, Wd*Wh*Ww, C
-        # W-MSA/SW-MSA
-        attn_windows = self.attn(x_windows, mask=attn_mask)  # B*nW, Wd*Wh*Ww, C
-        # merge windows
+
+        x_windows = window_partition(shifted_x, window_size)
+
+        attn_windows = self.attn(x_windows, mask=attn_mask)
+
         attn_windows = attn_windows.view(-1, *(window_size+(C,)))
-        shifted_x = window_reverse(attn_windows, window_size, B, Dp, Hp, Wp)  # B D' H' W' C
-        # reverse cyclic shift
+        shifted_x = window_reverse(attn_windows, window_size, B, Dp, Hp, Wp)
+
         if any(i > 0 for i in shift_size):
             x = torch.roll(shifted_x, shifts=(shift_size[0], shift_size[1], shift_size[2]), dims=(1, 2, 3))
         else:
@@ -295,16 +292,16 @@ class PatchMerging(nn.Module):
         """
         B, D, H, W, C = x.shape
 
-        # padding
+
         pad_input = (H % 2 == 1) or (W % 2 == 1)
         if pad_input:
             x = F.pad(x, (0, 0, 0, W % 2, 0, H % 2))
 
-        x0 = x[:, :, 0::2, 0::2, :]  # B D H/2 W/2 C
-        x1 = x[:, :, 1::2, 0::2, :]  # B D H/2 W/2 C
-        x2 = x[:, :, 0::2, 1::2, :]  # B D H/2 W/2 C
-        x3 = x[:, :, 1::2, 1::2, :]  # B D H/2 W/2 C
-        x = torch.cat([x0, x1, x2, x3], -1)  # B D H/2 W/2 4*C
+        x0 = x[:, :, 0::2, 0::2, :]
+        x1 = x[:, :, 1::2, 0::2, :]
+        x2 = x[:, :, 0::2, 1::2, :]
+        x3 = x[:, :, 1::2, 1::2, :]
+        x = torch.cat([x0, x1, x2, x3], -1)
 
         x = self.norm(x)
         x = self.reduction(x)
@@ -312,18 +309,18 @@ class PatchMerging(nn.Module):
         return x
 
 
-# cache each stage results
+
 @lru_cache()
 def compute_mask(D, H, W, window_size, shift_size, device):
-    img_mask = torch.zeros((1, D, H, W, 1), device=device)  # 1 Dp Hp Wp 1
+    img_mask = torch.zeros((1, D, H, W, 1), device=device)
     cnt = 0
     for d in slice(-window_size[0]), slice(-window_size[0], -shift_size[0]), slice(-shift_size[0],None):
         for h in slice(-window_size[1]), slice(-window_size[1], -shift_size[1]), slice(-shift_size[1],None):
             for w in slice(-window_size[2]), slice(-window_size[2], -shift_size[2]), slice(-shift_size[2],None):
                 img_mask[:, d, h, w, :] = cnt
                 cnt += 1
-    mask_windows = window_partition(img_mask, window_size)  # nW, ws[0]*ws[1]*ws[2], 1
-    mask_windows = mask_windows.squeeze(-1)  # nW, ws[0]*ws[1]*ws[2]
+    mask_windows = window_partition(img_mask, window_size)
+    mask_windows = mask_windows.squeeze(-1)
     attn_mask = mask_windows.unsqueeze(1) - mask_windows.unsqueeze(2)
     attn_mask = attn_mask.masked_fill(attn_mask != 0, float(-100.0)).masked_fill(attn_mask == 0, float(0.0))
     return attn_mask
@@ -367,7 +364,7 @@ class BasicLayer(nn.Module):
         self.depth = depth
         self.use_checkpoint = use_checkpoint
 
-        # build blocks
+
         self.blocks = nn.ModuleList([
             SwinTransformerBlock3D(
                 dim=dim,
@@ -395,7 +392,7 @@ class BasicLayer(nn.Module):
         Args:
             x: Input feature, tensor size (B, C, D, H, W).
         """
-        # calculate attention mask for SW-MSA
+
         B, C, D, H, W = x.shape
         window_size, shift_size = get_window_size((D,H,W), self.window_size, self.shift_size)
         x = rearrange(x, 'b c d h w -> b d h w c')
@@ -437,7 +434,7 @@ class PatchEmbed3D(nn.Module):
 
     def forward(self, x):
         """Forward function."""
-        # padding
+
         _, _, D, H, W = x.size()
         if W % self.patch_size[2] != 0:
             x = F.pad(x, (0, self.patch_size[2] - W % self.patch_size[2]))
@@ -446,7 +443,7 @@ class PatchEmbed3D(nn.Module):
         if D % self.patch_size[0] != 0:
             x = F.pad(x, (0, 0, 0, 0, 0, self.patch_size[0] - D % self.patch_size[0]))
 
-        x = self.proj(x)  # B C D Wh Ww
+        x = self.proj(x)
         if self.norm is not None:
             D, Wh, Ww = x.size(2), x.size(3), x.size(4)
             x = x.flatten(2).transpose(1, 2)
@@ -510,17 +507,12 @@ class SwinTransformer3D(nn.Module):
         self.window_size = window_size
         self.patch_size = patch_size
 
-        # split image into non-overlapping patches
         self.patch_embed = PatchEmbed3D(
             patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,
             norm_layer=norm_layer if self.patch_norm else None)
 
         self.pos_drop = nn.Dropout(p=drop_rate)
-
-        # stochastic depth
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
-
-        # build layers
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
         self.layers = nn.ModuleList()
         for i_layer in range(self.num_layers):
             layer = BasicLayer(
@@ -541,7 +533,7 @@ class SwinTransformer3D(nn.Module):
 
         self.num_features = int(embed_dim * 2**(self.num_layers-1))
 
-        # add a norm layer for each output
+
         self.norm = norm_layer(self.num_features)
 
         self._freeze_stages()
@@ -575,19 +567,19 @@ class SwinTransformer3D(nn.Module):
         checkpoint = torch.load(self.pretrained, map_location='cpu')
         state_dict = checkpoint['model']
 
-        # delete relative_position_index since we always re-init it
+
         relative_position_index_keys = [k for k in state_dict.keys() if "relative_position_index" in k]
         for k in relative_position_index_keys:
             del state_dict[k]
 
-        # delete attn_mask since we always re-init it
+
         attn_mask_keys = [k for k in state_dict.keys() if "attn_mask" in k]
         for k in attn_mask_keys:
             del state_dict[k]
 
         state_dict['patch_embed.proj.weight'] = state_dict['patch_embed.proj.weight'].unsqueeze(2).repeat(1,1,self.patch_size[0],1,1) / self.patch_size[0]
 
-        # bicubic interpolate relative_position_bias_table if not match
+
         relative_position_bias_table_keys = [k for k in state_dict.keys() if "relative_position_bias_table" in k]
         for k in relative_position_bias_table_keys:
             relative_position_bias_table_pretrained = state_dict[k]
@@ -626,13 +618,12 @@ class SwinTransformer3D(nn.Module):
         x = self.norm(x)
         x = rearrange(x, 'n d h w c -> n c d h w')
 
-        return x  # [B, C, T, H, W], T does not downsample so we can get the per-frame feature
+        return x
 
     def train(self, mode=True):
         """Convert the model into training mode while keep layers freezed."""
         super(SwinTransformer3D, self).train(mode)
         self._freeze_stages()
-
 
 
 class VideoSwinTransformerBackbone(nn.Module):
@@ -645,15 +636,12 @@ class VideoSwinTransformerBackbone(nn.Module):
     """
     def __init__(self, backbone_pretrained: bool, backbone_pretrained_path, train_backbone: bool, **kwargs):
         super(VideoSwinTransformerBackbone, self).__init__()
-        # patch_size is (1, 4, 4) instead of the original (2, 4, 4).
-        # this prevents swinT's original temporal downsampling so we can get per-frame features.
+
         swin_backbone = SwinTransformer3D(**kwargs)
         if backbone_pretrained and isinstance(backbone_pretrained_path, str):
             state_dict = torch.load(backbone_pretrained_path)['state_dict']
-            # extract swinT's kinetics-400 pretrained weights and ignore the rest (prediction head etc.)
             state_dict = {k[9:]: v for k, v in state_dict.items() if 'backbone.' in k}
 
-            # sum over the patch embedding weight temporal dim  [96, 3, 2, 4, 4] --> [96, 3, 1, 4, 4]
             patch_embed_weight = state_dict['patch_embed.proj.weight']
             patch_embed_weight = patch_embed_weight.sum(dim=2, keepdims=True)
             state_dict['patch_embed.proj.weight'] = patch_embed_weight
@@ -667,7 +655,7 @@ class VideoSwinTransformerBackbone(nn.Module):
         for layer in self.layers:
             self.downsamples.append(layer.downsample)
             layer.downsample = None
-        self.downsamples[-1] = None  # downsampling after the last layer is not necessary
+        self.downsamples[-1] = None
 
         self.layer_output_channels = [swin_backbone.embed_dim * 2 ** i for i in range(len(self.layers))]
         self.train_backbone = train_backbone
@@ -676,14 +664,14 @@ class VideoSwinTransformerBackbone(nn.Module):
                 parameter.requires_grad_(False)
 
     def forward(self, samples: torch.Tensor, num_frames):
-        # num_frames is needed, because we put time in batch dimension.
-        # samples: [B*T, 3, H, W]
+
+
         n, c, h, w = samples.shape
         samples = rearrange(samples, '(b t) c h w -> b c t h w', b=n//num_frames, t=num_frames)
         vid_embeds = self.patch_embed(samples)
         vid_embeds = self.pos_drop(vid_embeds)
 
-        out = {} # layer outputs before downsampling
+        out = {}
         for idx, (layer, downsample) in enumerate(zip(self.layers, self.downsamples)):
             vid_embeds = layer(vid_embeds.contiguous())
             out[str(idx)] = vid_embeds
@@ -691,7 +679,7 @@ class VideoSwinTransformerBackbone(nn.Module):
                 vid_embeds = rearrange(vid_embeds, 'b c t h w -> b t h w c')
                 vid_embeds = downsample(vid_embeds)
                 vid_embeds = rearrange(vid_embeds, 'b t h w c -> b c t h w')
-        # rearrange
+
         for idx, o in out.items():
             out[idx] = rearrange(o, 'b c t h w -> (b t) c h w')
         return out
@@ -794,7 +782,7 @@ class Joiner(nn.Sequential):
         pos = []
         for name, x in sorted(xs.items()):
             out.append(x)
-        # position encoding
+
         for x in out:
             pos.append(self[1](x).to(x.tensors.dtype))
         return out, pos
@@ -810,11 +798,6 @@ def build_video_swin_backbone(args):
 if __name__ == '__main__':
     cfgs = configs['video_swin_t_p4w7']
     model = VideoSwinTransformerBackbone(True, 'video_swin_pretrained/swin_tiny_patch244_window877_kinetics400_1k.pth', True, **cfgs).cuda()
-    inputs = torch.randn(10, 3,384,224).cuda() # 10 = 2 x 5
+    inputs = torch.randn(10, 3,384,224).cuda()
     import ipdb; ipdb.set_trace()
-    # outs
-    # 0: (10, 96, 96, 56)
-    # 1: (10, 192, 48, 28)
-    # 2: (10, 384, 24, 14)
-    # 3: (10, 768, 12, 7)
     out = model(inputs, num_frames=5)

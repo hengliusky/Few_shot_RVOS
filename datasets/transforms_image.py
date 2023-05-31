@@ -35,7 +35,7 @@ def crop(image, target, region):
         fields.append("boxes")
 
     if "masks" in target:
-        # FIXME should we update the area here if there are no boxes?
+
         target["masks"] = target["masks"][:, i : i + h, j : j + w]
         fields.append("masks")
 

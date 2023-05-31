@@ -242,7 +242,7 @@ class TrainTransform(object):
         self.transform = Compose([
             AddAxis(),
             Transpose(),
-            # RandomAffine(),
+
             ToFloat(),
             RandomContrast(),
             AdditiveNoise(),
@@ -286,7 +286,7 @@ class UnNormalize(object):
         """
         for t, m, s in zip(tensor, self.mean, self.std):
             t.mul_(s).add_(m)
-            # The normalize code -> t.sub_(m).div_(s)
+
         return tensor
 
 class ReverseToImage(object):

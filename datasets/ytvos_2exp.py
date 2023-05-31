@@ -8,7 +8,7 @@ from collections import defaultdict
 from datasets.categories import mini_ytvos_category_dict as category_dict
 import torch
 from torch.utils.data import DataLoader
-# from transform import TrainTransform, TestTransform
+
 import datasets.transforms_video as T
 import torchvision.transforms as T1
 import util.misc as utils
@@ -40,7 +40,7 @@ class YTVOSBase(Dataset):
                 meta['exp'] = exp_dict['exp']
                 meta['obj_id'] = int(exp_dict['obj_id'])
                 meta['frames'] = vid_frames
-                # get object category
+
                 obj_id = exp_dict['obj_id']
                 meta['category'] = vid_meta['objects'][obj_id]['category']
                 meta['category_id'] = category_dict[vid_meta['objects'][obj_id]['category']]
@@ -74,7 +74,7 @@ class YTVOSBase(Dataset):
         cols = np.any(img, axis=0)
         rmin, rmax = np.where(rows)[0][[0, -1]]
         cmin, cmax = np.where(cols)[0][[0, -1]]
-        return rmin, rmax, cmin, cmax  # y1, y2, x1, x2
+        return rmin, rmax, cmin, cmax
 
 
 
@@ -91,7 +91,7 @@ class YTVOSBase(Dataset):
         if obj_id is None:
             obj_id = random.sample(obj_ids, 1)[0]
         if exp_id is None:
-            exp_id = random.sample(obj_exp[obj_id], 1)[0]  #
+            exp_id = random.sample(obj_exp[obj_id], 1)[0]
 
         category_id = meta[0]['category_id']
         exp = meta[exp_id]['exp']
@@ -167,7 +167,7 @@ class YTVOSBase(Dataset):
             imgs, target = self._transforms(imgs, target)
         imgs = torch.stack(imgs, dim=0)
 
-        # FIXME: handle "valid", since some box may be removed due to random crop
+
         if torch.any(target['valid'] == 1):
             instance_check = True
         else:
@@ -209,7 +209,7 @@ class YTVOS_train(YTVOSBase):
         self.length = len(self.class_list) * self.sample_per_class
 
     def __getitem__(self, idx):
-        list_id = idx // self.sample_per_class  # 类别id
+        list_id = idx // self.sample_per_class
         vid_set = self.video_ids[list_id]
         query_vid = random.sample(vid_set, 1)
         s_vid_set = [x for x in vid_set if x not in query_vid]
@@ -234,7 +234,7 @@ class YTVOS_test(YTVOSBase):
         self.support_vids = []
         self.prepare_metas()
         self.support_frame = support_frames
-        self.class_list = [n + 1 for n in range(48) if n % 4 == (set_index - 1)]  # 12个做Test
+        self.class_list = [n + 1 for n in range(48) if n % 4 == (set_index - 1)]
 
         self.query_video_ids = []
         for class_id in self.class_list:

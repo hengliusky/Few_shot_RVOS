@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Author  : Haoxin Chen
-# @File    : Logger.py
+
 import torch
 import numpy as np
 import time
@@ -124,11 +121,11 @@ class TreeEvaluation():
         self.tmp_f = 0
         self.tmp_j = 0
     def update_evl(self, idx, query_mask, pred):
-        # B N H W
+
         batch = len(idx)
         self.tmp_f = 0
         self.tmp_j = 0
-        # batch =idx
+
         for i in range(batch):
             if not isinstance(idx[i], int):
                 id = idx[i].item()
@@ -158,7 +155,7 @@ class TreeEvaluation():
                         for ic in range(self.num_classes)]
 
     def test_in_train(self, query_label, pred):
-        # test N*H*F
+
         pred = pred.data.cpu().numpy()
         query_label = query_label.cpu().numpy()
 

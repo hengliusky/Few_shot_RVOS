@@ -1,10 +1,10 @@
-# -------------------------------------------------------------------------------------------------------------------
-# 1. Mini-Ref-SAIL-VOS
+
+
 sailvos_category_dict = {
     'dog': 1, 'car': 2, 'person': 3
 }
 
-# 2. Mini-Ref-Youtube-VOS
+
 mini_ytvos_category_dict = {
     'hat': 1, 'plant': 2, 'hand': 3, 'horse': 4, 'raccoon': 5, 'squirrel': 6, 'bus': 7, 'boat': 8, 'crocodile': 9,
     'penguin': 10, 'motorbike': 11, 'truck': 12, 'hedgehog': 13, 'lion': 14, 'earless_seal': 15, 'whale': 16, 'elephant': 17,

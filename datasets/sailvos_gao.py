@@ -71,7 +71,7 @@ class SAILVOSBase(Dataset):
         cols = np.any(img, axis=0)
         rmin, rmax = np.where(rows)[0][[0, -1]]
         cmin, cmax = np.where(cols)[0][[0, -1]]
-        return rmin, rmax, cmin, cmax  # y1, y2, x1, x2
+        return rmin, rmax, cmin, cmax
 
 
     def get_GT_byclass(self, vid, frame_num=1, test=False, exp_id=None):
@@ -125,11 +125,11 @@ class SAILVOSBase(Dataset):
                 y1, y2, x1, x2 = self.bounding_box(mask)
                 box = torch.tensor([x1, y1, x2, y2]).to(torch.float)
                 valid.append(1)
-            else:  # some frame didn't contain the instance
+            else:
                 box = torch.tensor([0, 0, 0, 0]).to(torch.float)
                 valid.append(0)
             mask = torch.from_numpy(mask)
-            # append
+
             imgs.append(img)
             labels.append(label)
             masks.append(mask)
@@ -161,7 +161,7 @@ class SAILVOSBase(Dataset):
             imgs, target = self._transforms(imgs, target)
         imgs = torch.stack(imgs, dim=0)
 
-        # FIXME: handle "valid", since some box may be removed due to random crop
+
         if torch.any(target['valid'] == 1):
             instance_check = True
         else:

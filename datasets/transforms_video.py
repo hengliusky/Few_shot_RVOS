@@ -37,7 +37,7 @@ class Check(object):
             if False in keep:
                 for k in range(len(keep)):
                     if not keep[k] and "boxes" in target:
-                        target['boxes'][k] = target['boxes'][k]//1000  # [0, 0, 0, 0]
+                        target['boxes'][k] = target['boxes'][k]//1000
             
         target['valid'] = keep.to(torch.int32)
 
@@ -102,7 +102,7 @@ def crop(clip, target, region):
         fields.append("boxes")
 
     if "masks" in target:
-        # FIXME should we update the area here if there are no boxes?
+
         target['masks'] = target['masks'][:, i:i + h, j:j + w]
         fields.append("masks")
 
@@ -290,7 +290,7 @@ class MinIoURandomCrop(object):
                     mask = is_center_of_bboxes_in_patch(boxes, patch)
                     if False in mask:
                         continue
-                    #TODO: use no center boxes
+
 
                     boxes[:, 2:] = boxes[:, 2:].clip(max=patch[2:])
                     boxes[:, :2] = boxes[:, :2].clip(min=patch[:2])
@@ -341,7 +341,7 @@ class RandomSaturation(object):
             image[:, :, 1] *= rand.uniform(self.lower, self.upper)
         return image, target
 
-class RandomHue(object): #
+class RandomHue(object):
     def __init__(self, delta=18.0):
         assert delta >= 0.0 and delta <= 360.0
         self.delta = delta
@@ -361,7 +361,7 @@ class RandomLightingNoise(object):
     def __call__(self, image, target):
         if rand.randint(2):
             swap = self.perms[rand.randint(len(self.perms))]
-            shuffle = SwapChannels(swap)  # shuffle channels
+            shuffle = SwapChannels(swap)
             image = shuffle(image)
         return image, target
 
@@ -413,7 +413,7 @@ class PhotometricDistort(object):
             imgs.append(Image.fromarray(img.astype('uint8')))
         return imgs, target
 
-# NOTICE: if used for mask, need to change
+
 class Expand(object):
     def __init__(self, mean):
         self.mean = mean
@@ -449,11 +449,11 @@ class RandomHorizontalFlip(object):
 
     def __call__(self, img, target):
         if random.random() < self.p:
-            # NOTE: caption for 'left' and 'right' should also change
+
             caption = target['caption']
             target['caption'] = caption.replace('left', '@').replace('right', 'left').replace('@', 'right')
-            # if padding_mask is not None:
-            #     padding_mask = cv2.flip(padding_mask, 1)
+
+
             return hflip(img, target)
         return img, target
 

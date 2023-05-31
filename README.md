@@ -16,7 +16,7 @@ Targeting Limited Samples
 
 
 
-## Abstract
+
 Referring video object segmentation (RVOS), as a supervised learning task, relies on sufficient annotated data for a given scene. However, in more realistic scenarios, 
 only minimal annotations are available for a new scene, which poses significant challenges to existing RVOS methods.
 With this in mind, we propose a simple yet effective model with a newly designed cross-modal affinity (CMA) module based on a Transformer architecture. 
@@ -32,7 +32,7 @@ Furthermore, we show impressive results of 77.7 J and 74.8 F on Mini-Ref-SAIL-VO
 
 
 <!--
-## Requirements
+
 
 We test the codes in the following environments, other versions may also be compatible:
 
@@ -41,11 +41,11 @@ We test the codes in the following environments, other versions may also be comp
 - Pytorch 1.8.1
 
 
-## Installation
+
 
 Please refer to [install.md](docs/install.md) for installation.
 
-## Data Preparation
+
 
 Please refer to [data.md](docs/data.md) for data preparation.
 
@@ -80,16 +80,16 @@ ReferFormer/
 ...
 ```
 
-## Model Zoo
 
-All the models are trained using 8 NVIDIA Tesla V100 GPU. You may change the `--backbone` parameter to use different backbones (see [here](https://github.com/wjn922/ReferFormer/blob/232b4066fb7d10845e4083e6a5a2cc0af5d1757e/opts.py#L31)).
+
+All the models are trained using 8 NVIDIA Tesla V100 GPU. You may change the `--backbone` parameter to use different backbones (see [here](https://github.com/wjn922/ReferFormer/blob/232b4066fb7d10845e4083e6a5a2cc0af5d1757e/opts.py
 
 **Note:** If you encounter the `OOM` error, please add the command `--use_checkpoint` (we add this command for Swin-L, Video-Swin-S and Video-Swin-B models).
 
 
-### Ref-Youtube-VOS
 
-To evaluate the results, please upload the zip file to the [competition server](https://competitions.codalab.org/competitions/29139#participate-submit_results).
+
+To evaluate the results, please upload the zip file to the [competition server](https://competitions.codalab.org/competitions/29139
 
 | Backbone| J&F | CFBI J&F  | Pretrain | Model | Submission | CFBI Submission | 
 | :----: | :----: | :----: | :----: | :----: | :----: | :----: | 
@@ -104,7 +104,7 @@ To evaluate the results, please upload the zip file to the [competition server](
 
 \* indicates the model is trained from scratch.
 
-### Ref-DAVIS17
+
 
 As described in the paper, we report the results using the model trained on Ref-Youtube-VOS without finetune.
 
@@ -115,7 +115,7 @@ As described in the paper, we report the results using the model trained on Ref-
 | Video-Swin-B | 61.1 | 58.1 | 64.1 | [model](https://drive.google.com/file/d/1nw7D3C_RrKTMzwtzjo39snbYLbv73anH/view?usp=sharing) |
 
 
-### A2D-Sentences
+
 
 The pretrained models are the same as those provided for Ref-Youtube-VOS.
 
@@ -126,7 +126,7 @@ The pretrained models are the same as those provided for Ref-Youtube-VOS.
 | Video-Swin-B | 78.6 | 70.3 | 55.0 | [weight](https://drive.google.com/file/d/1MJ1362zjqu-uZdXsSQH6pI1QOFqwv5lY/view?usp=sharing) | [model](https://drive.google.com/file/d/1WlNjKS_Li-1KoUzuPM4MRM4b-oK2Ka7c/view?usp=sharing) \| [log](https://drive.google.com/file/d/1tH-f9_U0gY-iNfXm6GRyttJp3uvm5NQw/view?usp=sharing) |
 
 
-### JHMDB-Sentences
+
 
 As described in the paper, we report the results using the model trained on A2D-Sentences without finetune.
 
@@ -137,14 +137,14 @@ As described in the paper, we report the results using the model trained on A2D-
 | Video-Swin-B | 73.0 | 71.8 | 43.7 | [model](https://drive.google.com/file/d/1WlNjKS_Li-1KoUzuPM4MRM4b-oK2Ka7c/view?usp=sharing) | 
 
 
-## Get Started
+
 
 Please see [Ref-Youtube-VOS](docs/Ref-Youtube-VOS.md), [Ref-DAVIS17](docs/Ref-DAVIS17.md), [A2D-Sentences](docs/A2D-Sentences.md) and [JHMDB-Sentences](docs/JHMDB-Sentences.md) for details.
 -->
 
-## Usage
 
-### Preparation
+
+
 Create a new directory data to store all the datasets.
 
 1. Downlaod the Mini-Ref-YouTube-VOS dataset and Mini-Ref-SAIL-VOS dataset .
@@ -166,13 +166,13 @@ data
 
 ```
 
-### Training
+
 
 ```
 ./scripts/train_ytvos.sh [/path/to/output_dir] [/path/to/pretrained_weight] --backbone [backbone]  --group 1
 ```
 
-### Inference
+
 
 ```
 python test.py --dataset_file mini-ytvos --group 1
@@ -180,12 +180,12 @@ python test.py --dataset_file mini-ytvos --group 1
 
 
 
-## Acknowledgement
+
 
 This repo is based on [ReferFormer](https://github.com/wjn922/ReferFormer) and [DANet](https://github.com/scutpaul/DANet). Thanks for their wonderful works.
 
 
-## Citation
+
 
 ```
 
