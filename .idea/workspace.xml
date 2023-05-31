@@ -6,13 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="Initial commit">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/base_few_referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/base_few_referformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer2.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/few_referformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer4.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/self_few_referformer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_self.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos_self.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -343,7 +337,7 @@
       <workItem from="1685524866373" duration="1227000" />
       <workItem from="1685527831843" duration="1608000" />
       <workItem from="1685529581588" duration="68000" />
-      <workItem from="1685529755619" duration="732000" />
+      <workItem from="1685529755619" duration="2577000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -478,7 +472,14 @@
       <option name="project" value="LOCAL" />
       <updated>1685529405525</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="Initial commit">
+      <created>1685530558587</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1685530558587</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
