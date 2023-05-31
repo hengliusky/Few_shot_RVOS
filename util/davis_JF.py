@@ -64,19 +64,6 @@ def db_eval_boundary(foreground_mask,gt_mask,bound_th=0.010):
 	return F
 
 def seg2bmap(seg,width=None,height=None):
-	"""
-	From a segmentation, compute a binary boundary map with 1 pixel wide
-	boundaries.  The boundary pixels are offset by 1/2 pixel towards the
-	origin from the actual segment boundary.
-	Arguments:
-		seg     : Segments labeled from 1..k.
-		width	  :	Width of desired bmap  <= seg.shape[1]
-		height  :	Height of desired bmap <= seg.shape[0]
-	Returns:
-		bmap (ndarray):	Binary boundary map.
-	 David Martin <dmartin@eecs.berkeley.edu>
-	 January 2003
- """
 
 	seg = seg.astype(np.bool)
 	seg[seg>0] = 1
@@ -122,13 +109,6 @@ def seg2bmap(seg,width=None,height=None):
 
 def db_eval_iou(annotation,segmentation,void_pixels=None):
 
-	""" Compute region similarity as the Jaccard Index.
-	Arguments:
-		annotation   (ndarray): binary annotation   map.
-		segmentation (ndarray): binary segmentation map.
-	Return:
-		jaccard (float): region similarity
- """
 
 	annotation   = annotation.astype(np.bool)
 	segmentation = segmentation.astype(np.bool)

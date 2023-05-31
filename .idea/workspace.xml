@@ -5,51 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bc2cf3ec-fc4d-4acf-84dd-3c1fc7a27bd5" name="默认变更列表" comment="Initial commit">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/sailvos_2exp.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/ref_sailvos.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/sailvos_gao.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/ytvos_2exp.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/ref_ytvos.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engine_referformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/base_few_referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/base_cma.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/criterion.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/criterion.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/few_referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/cma.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/referformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/self_few_referformer.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/self_cma.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/opts.py" beforeDir="false" afterPath="$PROJECT_DIR$/opts.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/referformer_finetune.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/referformer_nofinetune.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/backbone.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/criterion.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/deformable_transformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/matcher.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/functions/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/functions/ms_deform_attn_func.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/make.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/modules/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/modules/ms_deform_attn.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/setup.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/src/cpu/ms_deform_attn_cpu.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/src/cpu/ms_deform_attn_cpu.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/src/cuda/ms_deform_attn_cuda.cu" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/src/cuda/ms_deform_attn_cuda.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/src/cuda/ms_deform_im2col_cuda.cuh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/src/ms_deform_attn.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/src/vision.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/ops/test.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/position_encoding.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/postprocessors.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/referformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/segmentation.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/swin_transformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rvos_model/video_swin_transformer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/referformer_finetune.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_base.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos_base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_ytvos_self.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_ytvos_self.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ytvos_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/ytvos_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/backbone.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/backbone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/base_cma.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/base_cma.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/deformable_transformer1.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/davis_JF.py" beforeDir="false" afterPath="$PROJECT_DIR$/util/davis_JF.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,7 +77,7 @@
     <property name="WebServerToolWindowPanel.toolwindow.show.permissions" value="false" />
     <property name="WebServerToolWindowPanel.toolwindow.show.size" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/docs" />
-    <property name="settings.editor.selected.configurable" value="sshConsole" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
@@ -380,7 +342,8 @@
       <workItem from="1685529581588" duration="68000" />
       <workItem from="1685529755619" duration="2718000" />
       <workItem from="1685541823761" duration="85000" />
-      <workItem from="1685541910833" duration="995000" />
+      <workItem from="1685541910833" duration="2421000" />
+      <workItem from="1685544431126" duration="280000" />
     </task>
     <task id="LOCAL-00001" summary="2">
       <created>1652148257697</created>
@@ -529,7 +492,14 @@
       <option name="project" value="LOCAL" />
       <updated>1685537340004</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Initial commit">
+      <created>1685542918235</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1685542918236</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

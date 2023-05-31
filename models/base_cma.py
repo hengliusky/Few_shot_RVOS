@@ -427,19 +427,7 @@ class BASECMA(nn.Module):
         return text_features, text_sentence_features
 
     def dynamic_mask_with_coords(self, mask_features, mask_head_params, reference_points, targets):
-        """
-        Add the relative coordinates to the mask_features channel dimension,
-        and perform dynamic mask conv.
 
-        Args:
-            mask_features: [batch_size, time, c, h, w]
-            mask_head_params: [batch_size, time * num_queries_per_frame, num_params]
-            reference_points: [batch_size, time * num_queries_per_frame, 2], cxcy
-            targets (list[dict]): length is batch size
-                we need the key 'size' for computing location.
-        Return:
-            outputs_seg_mask: [batch_size, time * num_queries_per_frame, h, w]
-        """
         device = mask_features.device
         b, t, c, h, w = mask_features.shape
         

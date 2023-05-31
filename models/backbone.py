@@ -18,14 +18,6 @@ from .position_encoding  import build_position_encoding
 
 
 class FrozenBatchNorm2d(torch.nn.Module):
-    """
-    BatchNorm2d where the batch statistics and the affine parameters are fixed.
-
-    Copy-paste from torchvision.misc.ops with added eps before rqsrt,
-    without which any other models than torchvision.models.resnet[18,34,50,101]
-    produce nans.
-    与batch normalization的工作原理类似，将统计量（均值与方差）和可学习的仿射参数固定住
-    """
 
     def __init__(self, n):
         super(FrozenBatchNorm2d, self).__init__()
