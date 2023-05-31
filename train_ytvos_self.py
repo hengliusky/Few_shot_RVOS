@@ -22,7 +22,7 @@ import datasets.samplers as samplers
 
 from ytvos_engine import train_one_epoch
 from models import build_model
-from models import few_build_model4
+from models import self_few_build
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
 import opts
 from datasets.ytvos_2exp import build_yt_vos
@@ -41,7 +41,7 @@ def main(args):
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-    model, criterion, postprocessor = few_build_model4(args)
+    model, criterion, postprocessor = self_few_build(args)
     model.to(device)
 
     model_without_ddp = model

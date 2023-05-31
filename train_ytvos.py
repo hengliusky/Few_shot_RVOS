@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 import util.misc as utils
 import datasets.samplers as samplers
 from ytvos_engine import train_one_epoch
-from models import few_build_model2
+from models import few_build_model
 
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
 import opts
@@ -41,7 +41,7 @@ def main(args):
     np.random.seed(seed)
     random.seed(seed)
 
-    model, criterion, postprocessor = few_build_model2(args)
+    model, criterion, postprocessor = few_build_model(args)
     model.to(device)
 
     model_without_ddp = model

@@ -47,41 +47,7 @@ class ReferFormer(nn.Module):
                  num_patterns=0,
                  use_self_attn=True,
                  random_refpoints_xy=False,):
-        """ Initializes the model.
-        Parameters:
-            backbone: torch module of the backbone to be used. See backbone.py
-            transformer: torch module of the transformer architecture. See transformer.py
-            num_classes: number of object classes
-            num_queries: number of object queries, ie detection slot. This is the maximal number of objects
-                         ReferFormer can detect in a video. For ytvos, we recommend 5 queries for each frame.
-            num_frames:  number of clip frames
-            mask_dim: dynamic conv inter layer channel number.
-            dim_feedforward: vision-language fusion module ffn channel number.
-            dynamic_mask_channels: the mask feature output channel number.
-            aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
-            use_dab: using dynamic anchor boxes formulation
-            num_patterns: number of pattern embeddings
-            random_refpoints_xy: random init the x,y of anchor boxes and freeze them. (It sometimes helps to improve the performance)
 
-
-            num_classes=num_classes, ytovs:65
-            num_queries=args.num_queries,  
-            num_feature_levels=args.num_feature_levels,   
-            num_frames=args.num_frames,  
-            mask_dim=args.mask_dim,  
-            dim_feedforward=args.dim_feedforward,  
-            controller_layers=args.controller_layers,  
-            dynamic_mask_channels=args.dynamic_mask_channels,  
-            aux_loss=args.aux_loss,
-            with_box_refine=args.with_box_refine,
-            two_stage=args.two_stage,  
-            freeze_text_encoder=args.freeze_text_encoder,  
-            rel_coord=args.rel_coord,
-            use_dab=True,
-            num_patterns=args.num_patterns,  
-            random_refpoints_xy=args.random_refpoints_xy
-
-        """
         super().__init__()
         self.num_queries = num_queries  
         self.transformer = transformer
@@ -389,10 +355,6 @@ class ReferFormer(nn.Module):
         text_embed = repeat(query_text_sentence_features, 'b c -> b t q c', t=t, q=self.num_queries)
         hs, memory, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact, inter_samples = \
             self.transformer(srcs, text_embed, qmasks, qposes, query_embeds)  
-        
-        
-        
-        
 
         out = {}
         

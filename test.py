@@ -19,7 +19,7 @@ import torch
 from torch.utils.data import DataLoader, DistributedSampler
 from PIL import Image
 import util.misc as utils
-from models import few_build_model2
+from models import few_build_model
 import torch.nn.functional as F
 import opts
 from datasets.sailvos_2exp import build_sail_vos
@@ -62,7 +62,7 @@ def main(args, rand):
     test_list = [1]
     test_evaluations = Evaluation(class_list=test_list)
 
-    model1, criterion, _ = few_build_model2(args)
+    model1, criterion, _ = few_build_model(args)
     device = args.device
     model1.to(device)
 

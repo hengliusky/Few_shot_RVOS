@@ -48,41 +48,7 @@ class ReferFormer(nn.Module):
                  num_patterns=0,
                  use_self_attn=True,
                  random_refpoints_xy=False, ):
-        """ Initializes the model.
-        Parameters:
-            backbone: torch module of the backbone to be used. See backbone.py
-            transformer: torch module of the transformer architecture. See transformer.py
-            num_classes: number of object classes
-            num_queries: number of object queries, ie detection slot. This is the maximal number of objects
-                         ReferFormer can detect in a video. For ytvos, we recommend 5 queries for each frame.
-            num_frames:  number of clip frames
-            mask_dim: dynamic conv inter layer channel number.
-            dim_feedforward: vision-language fusion module ffn channel number.
-            dynamic_mask_channels: the mask feature output channel number.
-            aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
-            use_dab: using dynamic anchor boxes formulation
-            num_patterns: number of pattern embeddings
-            random_refpoints_xy: random init the x,y of anchor boxes and freeze them. (It sometimes helps to improve the performance)
 
-
-            num_classes=num_classes, ytovs:65
-            num_queries=args.num_queries,  
-            num_feature_levels=args.num_feature_levels,   
-            num_frames=args.num_frames,  
-            mask_dim=args.mask_dim,  
-            dim_feedforward=args.dim_feedforward,  
-            controller_layers=args.controller_layers,  
-            dynamic_mask_channels=args.dynamic_mask_channels,  
-            aux_loss=args.aux_loss,
-            with_box_refine=args.with_box_refine,
-            two_stage=args.two_stage,  
-            freeze_text_encoder=args.freeze_text_encoder,  
-            rel_coord=args.rel_coord,
-            use_dab=True,
-            num_patterns=args.num_patterns,  
-            random_refpoints_xy=args.random_refpoints_xy
-
-        """
         super().__init__()
         self.num_queries = num_queries
         self.transformer = transformer
@@ -428,55 +394,6 @@ class ReferFormer(nn.Module):
 
             after_transform = torch.cat((after_transform, support_fg_feat), dim=1)
             srcs.append(after_transform)
-
-        """srcs = []
-        for i, (query_feat, support_feat ) in enumerate(zip(qsrcs, ssrcs)):
-            support_feat = F.interpolate(support_feat, query_feat.size()[2:], mode='bilinear', align_corners=True)
-            
-            
-            
-            
-
-            
-            _, support_k, support_v = self.support_qkv(support_feat)
-            query_q, query_k, query_v = self.query_qkv(query_feat)
-            _, _, qh, qw = query_k.shape
-            _, c, h, w = support_k.shape
-            _, vc, _, _ = support_v.shape
-
-            assert qh == h and qw == w
-            
-            
-            support_k = support_k.view(s_b, s_t, c, h, w)
-            support_v = support_v.view(s_b, s_t, vc, h, w)
-            
-            support_k = support_k.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1).permute(0, 2, 1).contiguous()
-            
-            support_v = support_v.permute(0, 2, 1, 3, 4).contiguous().view(b, vc, -1)
-            middle_frame_index = int(t / 2)
-            query_q = query_q.view(b, t, c, h, w)
-            query_k = query_k.view(b, t, c, h, w)
-            middle_q = query_q[:, middle_frame_index]
-            assert len(middle_q.shape) == 4
-            
-            middle_q = middle_q.view(b, c, -1)
-            
-            new_V, sim_refer = self.transformer1(middle_q, support_k, support_v)
-            
-            
-            
-            middle_K = query_k[:, middle_frame_index]
-            middle_K = middle_K.view(b, c, -1).permute(0, 2, 1).contiguous()
-            query_q = query_q.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1)
-            Out, sim_middle = self.transformer1(query_q, middle_K, new_V)
-            after_transform = Out.view(b, vc, t, h, w)
-            after_transform = after_transform.permute(0, 2, 1, 3, 4).contiguous()
-
-            
-            query_feat = self.conv_q(query_feat)
-            after_transform = after_transform.view(-1, vc, h, w)
-            after_transform = torch.cat((after_transform, query_feat), dim=1)
-            srcs.append(after_transform)"""
 
         if self.two_stage:
             query_embeds = None
