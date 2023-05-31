@@ -1,8 +1,4 @@
-"""
 
-Training script of ReferFormer
-Modified from DETR (https://github.com/facebookresearch/detr)
-"""
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '0'
@@ -24,7 +20,7 @@ from models import few_build_model
 
 from tools.load_pretrained_weights import pre_trained_model_to_finetune
 import opts
-from datasets.ytvos_2exp import build_yt_vos
+from datasets.ref_ytvos import build_yt_vos
 
 def main(args):
     args.masks = True

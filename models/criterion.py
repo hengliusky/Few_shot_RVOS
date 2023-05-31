@@ -12,12 +12,8 @@ from .segmentation import (dice_loss, sigmoid_focal_loss)
 from einops import rearrange
 
 class SetCriterion(nn.Module):
-    """ This class computes the loss for ReferFormer.
-    The process happens in two steps:
-        1) we compute hungarian assignment between ground truth boxes and the outputs of the model
-        2) we supervise each pair of matched ground-truth / prediction (supervise class and box)
-    """
     def __init__(self, num_classes, matcher, weight_dict, eos_coef, losses, focal_alpha=0.25):
+
         """ Create the criterion.
         Parameters:
             num_classes: number of object categories, omitting the special no-object category

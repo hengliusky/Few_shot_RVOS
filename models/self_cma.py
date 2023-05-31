@@ -1,7 +1,4 @@
-"""
-ReferFormer model class.
-Modified from DETR (https://github.com/facebookresearch/detr)
-"""
+
 
 import torch
 import torch.nn.functional as F
@@ -18,7 +15,6 @@ from util.misc import (NestedTensor, nested_tensor_from_tensor_list,
 from .position_encoding import PositionEmbeddingSine1D
 from .backbone import build_backbone
 from .deformable_transformer import build_deforamble_transformer
-
 from .segmentation import CrossModalFPNDecoder, VisionLanguageFusionModule
 from .matcher import build_matcher
 from .criterion import SetCriterion
@@ -37,8 +33,7 @@ def _get_clones(module, N):
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-class ReferFormer(nn.Module):
-    """ This is the ReferFormer module that performs referring video object detection """
+class SELFCMA(nn.Module):
 
     def __init__(self, backbone, transformer, num_classes, num_queries, num_feature_levels,
                  num_frames, mask_dim, dim_feedforward,
@@ -47,6 +42,7 @@ class ReferFormer(nn.Module):
                  freeze_text_encoder=False, rel_coord=True,
                  use_dab=True,
                  num_patterns=0,
+                 use_self_attn=True,
                  random_refpoints_xy=False, ):
 
         super().__init__()
@@ -136,7 +132,6 @@ class ReferFormer(nn.Module):
         if freeze_text_encoder:
             for p in self.text_encoder.parameters():
                 p.requires_grad_(False)
-
         self.resizer = FeatureResizer(
             input_feat_size=768,
             output_feat_size=hidden_dim,
@@ -196,9 +191,27 @@ class ReferFormer(nn.Module):
         dropout = 0.1
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(128)
+        self.use_self_attn = use_self_attn
 
     def forward(self, q_samples: NestedTensor, q_captions, q_targets, s_samples: NestedTensor, s_captions, s_targets):
+        """The forward expects a NestedTensor, which consists of:
+               - samples.tensors: image sequences, of shape [num_frames x 3 x H x W]
+               - samples.mask: a binary mask of shape [num_frames x H x W], containing 1 on padded pixels
+               - captions: list[str]
+               - targets:  list[dict]
 
+            It returns a dict with the following elements:
+               - "pred_masks": Shape = [batch_size x num_queries x out_h x out_w]
+
+               - "pred_logits": the classification logits (including no-object) for all queries.
+                                Shape= [batch_size x num_queries x num_classes]
+               - "pred_boxes": The normalized boxes coordinates for all queries, represented as
+                               (center_x, center_y, height, width). These values are normalized in [0, 1],
+                               relative to the size of each individual image (disregarding possible padding).
+                               See PostProcess for information on how to retrieve the unnormalized bounding box.
+               - "aux_outputs": Optional, only returned when auxilary losses are activated. It is a list of
+                                dictionnaries containing the two above keys for each decoder layer.
+        """
 
         if not isinstance(q_samples, NestedTensor):
             q_samples = nested_tensor_from_videos_list(q_samples)
@@ -341,19 +354,18 @@ class ReferFormer(nn.Module):
 
             _, support_k, support_v = self.support_qkv(support_fg_feat)
             query_q, query_k, query_v = self.query_qkv(query_feat)
-            _, _, qh, qw = query_k.shape
+            bf, _, qh, qw = query_k.shape
             _, c, h, w = support_k.shape
             _, vc, _, _ = support_v.shape
 
             assert qh == h and qw == w
 
-            s_middle_frame_index = int(s_t / 2)
             support_k = support_k.view(s_b, s_t, c, h, w)
-            support_v = support_v.view(s_b, s_t, c, h, w)
-            s_middle_k = support_k[:, s_middle_frame_index]
-            s_middle_v = support_v[:, s_middle_frame_index]
-            s_middle_k = s_middle_k.view(b, c, -1).permute(0, 2, 1).contiguous()
-            s_middle_v = s_middle_v.contiguous().view(b, c, -1)
+            support_v = support_v.view(s_b, s_t, vc, h, w)
+
+            support_k = support_k.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1).permute(0, 2, 1).contiguous()
+
+            support_v = support_v.permute(0, 2, 1, 3, 4).contiguous().view(b, vc, -1)
 
             middle_frame_index = int(t / 2)
             query_q = query_q.view(b, t, c, h, w)
@@ -367,24 +379,17 @@ class ReferFormer(nn.Module):
             middle_k = middle_k.view(b, c, -1).permute(0, 2, 1).contiguous()
             middle_v = middle_v.contiguous().view(b, c, -1)
             new_q, sim_middle = self.transformer1(query_q, middle_k, middle_v)
-
             new_q = query_q + self.dropout(new_q.transpose(1, 2)).transpose(1, 2)
             new_q = self.layer_norm(new_q.transpose(1, 2)).transpose(1, 2)
 
-            Out, sim_refer = self.transformer1(new_q, s_middle_k, s_middle_v)
-
-            Out = new_q + self.dropout(Out.transpose(1, 2)).transpose(1, 2)
-            Out = self.layer_norm(Out.transpose(1, 2)).transpose(1, 2)
-
-            after_transform = Out.view(b, vc, t, h, w)
+            after_transform = new_q.view(b, vc, t, h, w)
             after_transform = after_transform.permute(0, 2, 1, 3, 4).contiguous()
 
-            query_feat = self.conv_q(query_feat)
+            support_fg_feat = self.conv_q(support_fg_feat[:bf])
             after_transform = after_transform.view(-1, vc, h, w)
-            after_transform = torch.cat((after_transform, query_feat), dim=1)
+
+            after_transform = torch.cat((after_transform, support_fg_feat), dim=1)
             srcs.append(after_transform)
-
-
 
         if self.two_stage:
             query_embeds = None
@@ -440,7 +445,6 @@ class ReferFormer(nn.Module):
         mask_features = self.pixel_decoder(q_features, query_text_features, q_pos, memory,
                                            nf=t)
         mask_features = rearrange(mask_features, '(b t) c h w -> b t c h w', b=b, t=t)
-
         outputs_seg_masks = []
         for lvl in range(hs.shape[0]):
             dynamic_mask_head_params = self.controller(hs[lvl])
@@ -452,10 +456,8 @@ class ReferFormer(nn.Module):
             outputs_seg_mask = rearrange(outputs_seg_mask, 'b (t q) h w -> b t q h w', t=t)
             outputs_seg_masks.append(outputs_seg_mask)
         out['pred_masks'] = outputs_seg_masks[-1]
-
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord, outputs_seg_masks)
-
         if not self.training:
             inter_references = inter_references[-2, :, :, :2]
             inter_references = rearrange(inter_references, '(b t) q n -> b t q n', b=b, t=t)
@@ -464,7 +466,6 @@ class ReferFormer(nn.Module):
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord, outputs_seg_masks):
-
         return [{"pred_logits": a, "pred_boxes": b, "pred_masks": c}
                 for a, b, c in zip(outputs_class[:-1], outputs_coord[:-1], outputs_seg_masks[:-1])]
 
@@ -472,17 +473,12 @@ class ReferFormer(nn.Module):
         if isinstance(captions[0], str):
             tokenized = self.tokenizer.batch_encode_plus(captions, padding="longest", return_tensors="pt").to(device)
             encoded_text = self.text_encoder(**tokenized)
-
             text_attention_mask = tokenized.attention_mask.ne(1).bool()
-
             text_features = encoded_text.last_hidden_state
             text_features = self.resizer(text_features)
             text_masks = text_attention_mask
-
             text_features = NestedTensor(text_features, text_masks)
-
             text_sentence_features = encoded_text.pooler_output
-
             text_sentence_features = self.resizer(text_sentence_features)
         else:
             raise ValueError("Please mask sure the caption is a list of string")
@@ -504,10 +500,8 @@ class ReferFormer(nn.Module):
         """
         device = mask_features.device
         b, t, c, h, w = mask_features.shape
-
         _, num_queries = reference_points.shape[:2]
         q = num_queries // t
-
         new_reference_points = []
         for i in range(b):
             img_h, img_w = targets[i]['size']
@@ -515,9 +509,7 @@ class ReferFormer(nn.Module):
             tmp_reference_points = reference_points[i] * scale_f[None, :]
             new_reference_points.append(tmp_reference_points)
         new_reference_points = torch.stack(new_reference_points, dim=0)
-
         reference_points = new_reference_points
-
         if self.rel_coord:
             reference_points = rearrange(reference_points, 'b (t q) n -> b t q n', t=t, q=q)
             locations = compute_locations(h, w, device=device, stride=self.mask_feat_stride)
@@ -525,7 +517,6 @@ class ReferFormer(nn.Module):
                               locations.reshape(1, 1, 1, h, w, 2)
             relative_coords = relative_coords.permute(0, 1, 2, 5, 3,
                                                       4)
-
             mask_features = repeat(mask_features, 'b t c h w -> b t q c h w',
                                    q=q)
             mask_features = torch.cat([mask_features, relative_coords], dim=3)
@@ -533,22 +524,17 @@ class ReferFormer(nn.Module):
             mask_features = repeat(mask_features, 'b t c h w -> b t q c h w',
                                    q=q)
         mask_features = mask_features.reshape(1, -1, h, w)
-
         mask_head_params = mask_head_params.flatten(0, 1)
         weights, biases = parse_dynamic_params(
             mask_head_params, self.dynamic_mask_channels,
             self.weight_nums, self.bias_nums
         )
-
         mask_logits = self.mask_heads_forward(mask_features, weights, biases, mask_head_params.shape[0])
         mask_logits = mask_logits.reshape(-1, 1, h, w)
-
         assert self.mask_feat_stride >= self.mask_out_stride
         assert self.mask_feat_stride % self.mask_out_stride == 0
-
         mask_logits = aligned_bilinear(mask_logits, int(self.mask_feat_stride / self.mask_out_stride))
         mask_logits = mask_logits.reshape(b, num_queries, mask_logits.shape[-2], mask_logits.shape[-1])
-
         return mask_logits
 
     def mask_heads_forward(self, features, weights, biases, num_insts):
@@ -572,16 +558,12 @@ class ReferFormer(nn.Module):
         return x
 
     def transformer1(self, Q, K, V):
-
         B, CQ, WQ = Q.shape
         _, CV, WK = V.shape
-
         P = torch.bmm(K, Q)
         P = P / math.sqrt(CQ)
         P = torch.softmax(P, dim=1)
-
         M = torch.bmm(V, P)
-
         return M, P
 
 
@@ -589,25 +571,18 @@ def parse_dynamic_params(params, channels, weight_nums, bias_nums):
     assert params.dim() == 2
     assert len(weight_nums) == len(bias_nums)
     assert params.size(1) == sum(weight_nums) + sum(bias_nums)
-
     num_insts = params.size(0)
     num_layers = len(weight_nums)
-
     params_splits = list(torch.split_with_sizes(params, weight_nums + bias_nums, dim=1))
-
     weight_splits = params_splits[:num_layers]
     bias_splits = params_splits[num_layers:]
-
     for l in range(num_layers):
         if l < num_layers - 1:
-
             weight_splits[l] = weight_splits[l].reshape(num_insts * channels, -1, 1, 1)
             bias_splits[l] = bias_splits[l].reshape(num_insts * channels)
         else:
-
             weight_splits[l] = weight_splits[l].reshape(num_insts * 1, -1, 1, 1)
             bias_splits[l] = bias_splits[l].reshape(num_insts)
-
     return weight_splits, bias_splits
 
 
@@ -615,10 +590,8 @@ def aligned_bilinear(tensor, factor):
     assert tensor.dim() == 4
     assert factor >= 1
     assert int(factor) == factor
-
     if factor == 1:
         return tensor
-
     h, w = tensor.size()[2:]
     tensor = F.pad(tensor, pad=(0, 1, 0, 1), mode="replicate")
     oh = factor * h + 1
@@ -632,7 +605,6 @@ def aligned_bilinear(tensor, factor):
         tensor, pad=(factor // 2, 0, factor // 2, 0),
         mode="replicate"
     )
-
     return tensor[:, :, :oh - 1, :ow - 1]
 
 
@@ -640,11 +612,9 @@ def compute_locations(h, w, device, stride=1):
     shifts_x = torch.arange(
         0, w * stride, step=stride,
         dtype=torch.float32, device=device)
-
     shifts_y = torch.arange(
         0, h * stride, step=stride,
         dtype=torch.float32, device=device)
-
     shift_y, shift_x = torch.meshgrid(shifts_y, shifts_x)
     shift_x = shift_x.reshape(-1)
     shift_y = shift_y.reshape(-1)
@@ -676,7 +646,6 @@ class FeatureResizer(nn.Module):
     def __init__(self, input_feat_size, output_feat_size, dropout, do_ln=True):
         super().__init__()
         self.do_ln = do_ln
-
         self.fc = nn.Linear(input_feat_size, output_feat_size, bias=True)
         self.layer_norm = nn.LayerNorm(output_feat_size, eps=1e-12)
         self.dropout = nn.Dropout(dropout)
@@ -704,7 +673,6 @@ def extended_simple_transform(x, beta):
 
 
 class QueryKeyValue(nn.Module):
-
     def __init__(self, indim, keydim, valdim):
         super(QueryKeyValue, self).__init__()
         self.query = nn.Conv2d(indim, keydim, kernel_size=3, padding=1, stride=1)
@@ -721,10 +689,6 @@ def build(args):
     else:
         if args.dataset_file == 'ytvos':
             num_classes = 36
-        elif args.dataset_file == 'davis':
-            num_classes = 78
-        elif args.dataset_file == 'a2d' or args.dataset_file == 'jhmdb':
-            num_classes = 1
         else:
             num_classes = 91
     device = torch.device(args.device)
@@ -740,7 +704,7 @@ def build(args):
 
     transformer = build_deforamble_transformer(args)
 
-    model = ReferFormer(
+    model = SELFCMA(
         backbone,
         transformer,
         num_classes=num_classes,
@@ -758,6 +722,7 @@ def build(args):
         rel_coord=args.rel_coord,
         use_dab=args.use_dab,
         num_patterns=args.num_patterns,
+        use_self_attn=args.use_self_attn,
         random_refpoints_xy=args.random_refpoints_xy
     )
     matcher = build_matcher(args)

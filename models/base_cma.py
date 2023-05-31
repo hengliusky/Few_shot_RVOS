@@ -1,7 +1,3 @@
-"""
-ReferFormer model class.
-Modified from DETR (https://github.com/facebookresearch/detr)
-"""
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -32,11 +28,9 @@ def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])  
 
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-
-class ReferFormer(nn.Module):
-    """ This is the ReferFormer module that performs referring video object detection """
+class BASECMA(nn.Module):
 
     def __init__(self, backbone, transformer, num_classes, num_queries, num_feature_levels,
                  num_frames, mask_dim, dim_feedforward,
@@ -691,7 +685,7 @@ def build(args):
 
     transformer = build_deforamble_transformer(args)
 
-    model = ReferFormer(
+    model = BASECMA(
         backbone,
         transformer,
         num_classes=num_classes,

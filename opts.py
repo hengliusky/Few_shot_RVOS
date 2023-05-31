@@ -1,14 +1,12 @@
 import argparse
-
 def get_args_parser():
-    parser = argparse.ArgumentParser('ReferFormer training and inference scripts.', add_help=False)
+    parser = argparse.ArgumentParser('training and inference scripts.', add_help=False)
     parser.add_argument('--lr', default=1e-4, type=float)
     parser.add_argument('--lr_backbone', default=5e-5, type=float)
     parser.add_argument('--lr_backbone_names', default=['backbone.0'], type=str, nargs='+')
     parser.add_argument('--lr_text_encoder', default=1e-5, type=float)
     parser.add_argument('--lr_text_encoder_names', default=['text_encoder'], type=str, nargs='+')
     parser.add_argument('--lr_support_names', default=['support_qkv', 'query_qkv', 'conv_q'], type=str, nargs='+')
-
     parser.add_argument('--lr_linear_proj_names', default=['reference_points', 'sampling_offsets'], type=str, nargs='+')
     parser.add_argument('--lr_linear_proj_mult', default=1.0, type=float)
     parser.add_argument('--batch_size', default=1, type=int)
@@ -17,21 +15,10 @@ def get_args_parser():
     parser.add_argument('--lr_drop', default=[6, 8], type=int, nargs='+')
     parser.add_argument('--clip_max_norm', default=0.1, type=float,
                         help='gradient clipping max norm')
-
-
-
-
-
     parser.add_argument('--pretrained_weights', type=str, default=None,
-                        help="Path to the pretrained model.") 
-
-
+                        help="Path to the pretrained model.")
     parser.add_argument('--with_box_refine', default=False, action='store_true')
     parser.add_argument('--two_stage', default=False, action='store_true')
-
-
-
-
     parser.add_argument('--backbone', default='resnet50', type=str, 
                         help="Name of the convolutional backbone to use")
     parser.add_argument('--backbone_pretrained', default=None, type=str, 
@@ -42,13 +29,10 @@ def get_args_parser():
     parser.add_argument('--position_embedding', default='sine', type=str, choices=('sine', 'learned'),
                         help="Type of positional embedding to use on top of the image features")
     parser.add_argument('--num_feature_levels', default=4, type=int, help='number of feature levels')
-
     parser.add_argument('--pe_temperatureH', default=20, type=int,
                         help="Temperature for height positional encoding.")
     parser.add_argument('--pe_temperatureW', default=20, type=int,
                         help="Temperature for width positional encoding.")
-
-
     parser.add_argument('--enc_layers', default=4, type=int,
                         help="Number of encoding layers in the transformer")
     parser.add_argument('--dec_layers', default=4, type=int,
@@ -73,12 +57,7 @@ def get_args_parser():
                         help='number of pattern embeddings. See Anchor DETR for more details.')
     parser.add_argument('--random_refpoints_xy', action='store_true',
                         help="Random init the x,y of anchor boxes and freeze them.")
-
-
-
     parser.add_argument('--freeze_text_encoder', action='store_true')
-
-
     parser.add_argument('--masks', action='store_true',
                         help="Train segmentation head if the flag is provided")
     parser.add_argument('--mask_dim', default=256, type=int, 
@@ -89,7 +68,6 @@ def get_args_parser():
                         help="Dynamic conv final channel number")
     parser.add_argument('--no_rel_coord', dest='rel_coord', action='store_false',
                         help="Disables relative coordinates")
-    
 
     parser.add_argument('--no_aux_loss', dest='aux_loss', action='store_false',
                         help="Disables auxiliary decoding losses (loss at each layer)")
@@ -105,7 +83,6 @@ def get_args_parser():
     parser.add_argument('--set_cost_dice', default=5, type=float,
                         help="mask coefficient in the matching cost")
 
-
     parser.add_argument('--mask_loss_coef', default=2, type=float)
     parser.add_argument('--dice_loss_coef', default=5, type=float)
     parser.add_argument('--cls_loss_coef', default=2, type=float)
@@ -114,9 +91,6 @@ def get_args_parser():
     parser.add_argument('--eos_coef', default=0.1, type=float,
                         help="Relative classification weight of the no-object class")
     parser.add_argument('--focal_alpha', default=0.25, type=float)
-
-
-
 
     parser.add_argument('--dataset_file', default='ytvos', help='Dataset name') 
     parser.add_argument('--coco_path', type=str, default='data/coco')
@@ -128,7 +102,6 @@ def get_args_parser():
     parser.add_argument('--max_size', default=640, type=int, help="max size for the frame")
     parser.add_argument('--binary', action='store_true')
     parser.add_argument('--remove_difficult', action='store_true')
-
     parser.add_argument('--output_dir', default='results',
                         help='path where to save, empty for no saving')
     parser.add_argument('--device', default='cuda',
@@ -139,20 +112,15 @@ def get_args_parser():
                         help='start epoch')
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--num_workers', default=4, type=int)
-
-
     parser.add_argument('--threshold', default=0.5, type=float)
     parser.add_argument('--ngpu', default=3, type=int, help='gpu number when inference for ref-ytvos and ref-davis')
     parser.add_argument('--split', default='valid', type=str, choices=['valid', 'test'])
     parser.add_argument('--visualize', action='store_true', help='whether visualize the masks during inference')
     parser.add_argument('--cat_id', default=1, type=int)
-
     parser.add_argument('--world_size', default=1, type=int,
                         help='number of distributed processes')
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--cache_mode', default=False, action='store_true', help='whether to cache images on memory')
-
-
     parser.add_argument('--iterations_per_epoch', default=[20], help='num of iterations for each class')
     parser.add_argument('--shots', default=1)
     parser.add_argument('--data_path', default='/***/***/***')

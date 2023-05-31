@@ -1,8 +1,4 @@
-"""
 
-Training script of ReferFormer
-Modified from DETR (https://github.com/facebookresearch/detr)
-"""
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '2'
@@ -22,9 +18,9 @@ import util.misc as utils
 from models import few_build_model
 import torch.nn.functional as F
 import opts
-from datasets.sailvos_2exp import build_sail_vos
+from datasets.ref_sailvos import build_sail_vos
 
-from datasets.ytvos_2exp import build_yt_vos
+from datasets.ref_ytvos import build_yt_vos
 import matplotlib.pyplot as plt
 def main(args, rand):
     seed = args.seed+rand

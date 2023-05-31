@@ -1,8 +1,6 @@
-from .referformer import build
-
-from .few_referformer import build as few_build2
-from .self_few_referformer import build as few_build4
-from .base_few_referformer import build as base_build
+from .cma import build as few_build2
+from .self_cma import build as few_build4
+from .base_cma import build as base_build
 
 def build_model(args):
     return build(args)

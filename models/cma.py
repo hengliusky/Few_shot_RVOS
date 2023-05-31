@@ -1,7 +1,5 @@
-"""
-ReferFormer model class.
-Modified from DETR (https://github.com/facebookresearch/detr)
-"""
+
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -17,6 +15,7 @@ from util.misc import (NestedTensor, nested_tensor_from_tensor_list,
 from .position_encoding import PositionEmbeddingSine1D
 from .backbone import build_backbone
 from .deformable_transformer import build_deforamble_transformer
+
 from .segmentation import CrossModalFPNDecoder, VisionLanguageFusionModule
 from .matcher import build_matcher
 from .criterion import SetCriterion
@@ -35,8 +34,7 @@ def _get_clones(module, N):
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
-class ReferFormer(nn.Module):
-    """ This is the ReferFormer module that performs referring video object detection """
+class CMA(nn.Module):
 
     def __init__(self, backbone, transformer, num_classes, num_queries, num_feature_levels,
                  num_frames, mask_dim, dim_feedforward,
@@ -67,14 +65,12 @@ class ReferFormer(nn.Module):
                 self.tgt_embed = nn.Embedding(num_queries, hidden_dim)
                 self.refpoint_embed = nn.Embedding(num_queries, 4)
                 if random_refpoints_xy:
-
                     self.refpoint_embed.weight.data[:, :2].uniform_(0, 1)
                     self.refpoint_embed.weight.data[:, :2] = inverse_sigmoid(self.refpoint_embed.weight.data[:, :2])
                     self.refpoint_embed.weight.data[:, :2].requires_grad = False
 
         if self.num_patterns > 0:
             self.patterns_embed = nn.Embedding(self.num_patterns, hidden_dim)
-
 
         if num_feature_levels > 1:
             num_backbone_outs = len(backbone.strides[-3:])
@@ -102,10 +98,11 @@ class ReferFormer(nn.Module):
         self.num_frames = num_frames
         self.mask_dim = mask_dim
         self.backbone = backbone
+        for p in self.backbone.parameters():
+            p.requires_grad_(False)
         self.aux_loss = aux_loss
         self.with_box_refine = with_box_refine
         assert self.two_stage == False, "args.two_stage must be false!"
-
 
         prior_prob = 0.01
         bias_value = -math.log((1 - prior_prob) / prior_prob)
@@ -129,16 +126,12 @@ class ReferFormer(nn.Module):
             self.bbox_embed = nn.ModuleList([self.bbox_embed for _ in range(num_pred)])
             self.transformer.decoder.bbox_embed = None
 
-
-
-
         self.tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
         self.text_encoder = RobertaModel.from_pretrained('roberta-base')
 
         if freeze_text_encoder:
             for p in self.text_encoder.parameters():
                 p.requires_grad_(False)
-
 
         self.resizer = FeatureResizer(
             input_feat_size=768,
@@ -149,12 +142,10 @@ class ReferFormer(nn.Module):
         self.fusion_module = VisionLanguageFusionModule(d_model=hidden_dim, nhead=8)
         self.text_pos = PositionEmbeddingSine1D(hidden_dim, normalize=True)
 
-
         self.rel_coord = rel_coord
         feature_channels = [self.backbone.num_channels[0]] + 3 * [hidden_dim]
         self.pixel_decoder = CrossModalFPNDecoder(feature_channels=feature_channels, conv_dim=hidden_dim,
                                                   mask_dim=mask_dim, dim_feedforward=dim_feedforward, norm="GN")
-
 
         self.controller_layers = controller_layers
         self.in_channels = mask_dim
@@ -182,76 +173,214 @@ class ReferFormer(nn.Module):
         self.num_gen_params = sum(weight_nums) + sum(bias_nums)
 
         self.controller = MLP(hidden_dim, hidden_dim, self.num_gen_params, 3)
-
+        """
+        (0): Linear(in_features=256, out_features=256, bias=True)
+        (1): Linear(in_features=256, out_features=256, bias=True)
+        (2): Linear(in_features=256, out_features=2137, bias=True)
+        """
         for layer in self.controller.layers:
             nn.init.zeros_(layer.bias)
             nn.init.xavier_uniform_(layer.weight)
 
-    def forward(self, samples: NestedTensor, captions, targets):
+        encoder_dim = 256
+        h_encdim = int(encoder_dim / 2)
+        self.support_qkv = QueryKeyValue(encoder_dim, keydim=128, valdim=h_encdim)
+        self.query_qkv = QueryKeyValue(encoder_dim, keydim=128, valdim=h_encdim)
 
-        if not isinstance(samples, NestedTensor):
-            samples = nested_tensor_from_videos_list(samples)
-        features, pos = self.backbone(samples)
-        b = len(captions)
-        t = pos[0].shape[0] // b
-        if 'valid_indices' in targets[0]:
-            valid_indices = torch.tensor([i * t + target['valid_indices'] for i, target in enumerate(targets)]).to(
-                pos[0].device)
-            for feature in features:
-                feature.tensors = feature.tensors.index_select(0, valid_indices)
-                feature.mask = feature.mask.index_select(0, valid_indices)
-            for i, p in enumerate(pos):
-                pos[i] = p.index_select(0, valid_indices)
-            samples.mask = samples.mask.index_select(0, valid_indices)
-            t = 1
-        text_features, text_sentence_features = self.forward_text(captions, device=pos[0].device)
-        srcs = []
-        masks = []
-        poses = []
-        text_pos = self.text_pos(text_features).permute(2, 0, 1)
-        text_word_features, text_word_masks = text_features.decompose()
-        text_word_features = text_word_features.permute(1, 0, 2)
-        for l, (feat, pos_l) in enumerate(zip(features[-3:], pos[-3:])):
+        self.conv_q = nn.Conv2d(encoder_dim, h_encdim, kernel_size=1, stride=1, padding=0)
+
+        dropout = 0.1
+        self.dropout = nn.Dropout(dropout)
+        self.layer_norm = nn.LayerNorm(128)
+
+    def forward(self, q_samples: NestedTensor, q_captions, q_targets, s_samples: NestedTensor, s_captions, s_targets):
+
+
+        if not isinstance(q_samples, NestedTensor):
+            q_samples = nested_tensor_from_videos_list(q_samples)
+        if not isinstance(s_samples, NestedTensor):
+            s_samples = nested_tensor_from_videos_list(s_samples)
+
+        q_features, q_pos = self.backbone(q_samples)
+        s_features, s_pos = self.backbone(s_samples)
+
+        b = len(q_captions)
+        t = q_pos[0].shape[0] // b
+
+        query_text_features, query_text_sentence_features = self.forward_text(q_captions, device=q_pos[0].device)
+
+        qsrcs = []
+        qmasks = []
+        qposes = []
+
+        query_text_pos = self.text_pos(query_text_features).permute(2, 0, 1)
+        query_text_word_features, query_text_word_masks = query_text_features.decompose()
+        query_text_word_features = query_text_word_features.permute(1, 0, 2)
+
+        for l, (feat, pos_l) in enumerate(zip(q_features[-3:], q_pos[-3:])):
             src, mask = feat.decompose()
-            src_proj_l = self.input_proj[l](src)
-            n, c, h, w = src_proj_l.shape
-            src_proj_l = rearrange(src_proj_l, '(b t) c h w -> (t h w) b c', b=b, t=t)
-            src_proj_l = self.fusion_module(tgt=src_proj_l,
-                                            memory=text_word_features,
-                                            memory_key_padding_mask=text_word_masks,
-                                            pos=text_pos,
-                                            query_pos=None
-                                            )
-            src_proj_l = rearrange(src_proj_l, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
+            qsrc_proj_l = self.input_proj[l](src)
+            n, c, h, w = qsrc_proj_l.shape
 
-            srcs.append(src_proj_l)
-            masks.append(mask)
-            poses.append(pos_l)
+            qsrc_proj_l = rearrange(qsrc_proj_l, '(b t) c h w -> (t h w) b c', b=b, t=t)
+
+            qsrc_proj_l = self.fusion_module(tgt=qsrc_proj_l,
+                                             memory=query_text_word_features,
+                                             memory_key_padding_mask=query_text_word_masks,
+                                             pos=query_text_pos,
+                                             query_pos=None
+                                             )
+            qsrc_proj_l = rearrange(qsrc_proj_l, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
+
+            qsrcs.append(qsrc_proj_l)
+            qmasks.append(mask)
+            qposes.append(pos_l)
             assert mask is not None
 
-        if self.num_feature_levels > (len(features) - 1):
-            _len_srcs = len(features) - 1
+        if self.num_feature_levels > (len(q_features) - 1):
+            _len_srcs = len(q_features) - 1
             for l in range(_len_srcs, self.num_feature_levels):
                 if l == _len_srcs:
-                    src = self.input_proj[l](features[-1].tensors)
+                    src = self.input_proj[l](q_features[-1].tensors)
                 else:
-                    src = self.input_proj[l](srcs[-1])
+                    src = self.input_proj[l](qsrcs[-1])
+                m = rearrange(q_samples.mask, 'b t h w -> (b t) h w', b=b, t=t)
 
-                m = rearrange(samples.mask, 'b t h w -> (b t) h w', b=b, t=t)
                 mask = F.interpolate(m[None].float(), size=src.shape[-2:]).to(torch.bool)[0]
                 pos_l = self.backbone[1](NestedTensor(src, mask)).to(src.dtype)
                 n, c, h, w = src.shape
+
                 src = rearrange(src, '(b t) c h w -> (t h w) b c', b=b, t=t)
+
                 src = self.fusion_module(tgt=src,
-                                         memory=text_word_features,
-                                         memory_key_padding_mask=text_word_masks,
-                                         pos=text_pos,
+                                         memory=query_text_word_features,
+                                         memory_key_padding_mask=query_text_word_masks,
+                                         pos=query_text_pos,
                                          query_pos=None
                                          )
                 src = rearrange(src, '(t h w) b c -> (b t) c h w', t=t, h=h, w=w)
-                srcs.append(src)
-                masks.append(mask)
-                poses.append(pos_l)
+
+                qsrcs.append(src)
+                qmasks.append(mask)
+                qposes.append(pos_l)
+
+        s_b = len(s_captions)
+        s_t = s_pos[0].shape[0] // b
+
+        support_text_features, support_text_sentence_features = self.forward_text(s_captions, device=s_pos[0].device)
+
+        ssrcs = []
+        smasks = []
+        sposes = []
+
+        support_text_pos = self.text_pos(support_text_features).permute(2, 0, 1)
+        support_text_word_features, support_text_word_masks = support_text_features.decompose()
+        support_text_word_features = support_text_word_features.permute(1, 0, 2)
+
+        for l, (feat, pos_l) in enumerate(zip(s_features[-3:], s_pos[-3:])):
+            src, mask = feat.decompose()
+
+            ssrc_proj_l = self.input_proj[l](src)
+            n, c, h, w = ssrc_proj_l.shape
+
+            ssrc_proj_l = rearrange(ssrc_proj_l, '(b t) c h w -> (t h w) b c', b=s_b, t=s_t)
+            ssrc_proj_l = extended_simple_transform(ssrc_proj_l, 1.3)
+            ssrc_proj_l = self.fusion_module(tgt=ssrc_proj_l,
+                                             memory=support_text_word_features,
+                                             memory_key_padding_mask=support_text_word_masks,
+                                             pos=support_text_pos,
+                                             query_pos=None
+                                             )
+            ssrc_proj_l = rearrange(ssrc_proj_l, '(t h w) b c -> (b t) c h w', t=s_t, h=h, w=w)
+
+            ssrcs.append(ssrc_proj_l)
+            smasks.append(mask)
+            sposes.append(pos_l)
+            assert mask is not None
+
+        if self.num_feature_levels > (len(s_features) - 1):
+            _len_srcs = len(s_features) - 1
+            for l in range(_len_srcs, self.num_feature_levels):
+                if l == _len_srcs:
+                    src = self.input_proj[l](s_features[-1].tensors)
+                else:
+                    src = self.input_proj[l](ssrcs[-1])
+
+                m = rearrange(s_samples.mask, 'b t h w -> (b t) h w', b=s_b, t=s_t)
+                mask = F.interpolate(m[None].float(), size=src.shape[-2:]).to(torch.bool)[0]
+                pos_l = self.backbone[1](NestedTensor(src, mask)).to(src.dtype)
+                n, c, h, w = src.shape
+
+                src = rearrange(src, '(b t) c h w -> (t h w) b c', b=s_b, t=s_t)
+
+                src = self.fusion_module(tgt=src,
+                                         memory=support_text_word_features,
+                                         memory_key_padding_mask=support_text_word_masks,
+                                         pos=support_text_pos,
+                                         query_pos=None
+                                         )
+                src = rearrange(src, '(t h w) b c -> (b t) c h w', t=s_t, h=h, w=w)
+
+                ssrcs.append(src)
+                smasks.append(mask)
+                sposes.append(pos_l)
+
+        srcs = []
+        for i in range(s_b):
+            support_masks = s_targets[i]['masks'].unsqueeze(1)
+        for i, (query_feat, support_feat) in enumerate(zip(qsrcs, ssrcs)):
+            support_feat = F.interpolate(support_feat, query_feat.size()[2:], mode='bilinear', align_corners=True)
+            support_mask = F.interpolate(support_masks.float(), support_feat.size()[2:], mode='bilinear',
+                                         align_corners=True)
+
+            support_fg_feat = support_feat * support_mask
+
+            _, support_k, support_v = self.support_qkv(support_fg_feat)
+            query_q, query_k, query_v = self.query_qkv(query_feat)
+            _, _, qh, qw = query_k.shape
+            _, c, h, w = support_k.shape
+            _, vc, _, _ = support_v.shape
+
+            assert qh == h and qw == w
+
+            s_middle_frame_index = int(s_t / 2)
+            support_k = support_k.view(s_b, s_t, c, h, w)
+            support_v = support_v.view(s_b, s_t, c, h, w)
+            s_middle_k = support_k[:, s_middle_frame_index]
+            s_middle_v = support_v[:, s_middle_frame_index]
+            s_middle_k = s_middle_k.view(b, c, -1).permute(0, 2, 1).contiguous()
+            s_middle_v = s_middle_v.contiguous().view(b, c, -1)
+
+            middle_frame_index = int(t / 2)
+            query_q = query_q.view(b, t, c, h, w)
+            query_k = query_k.view(b, t, c, h, w)
+            query_v = query_v.view(b, t, c, h, w)
+            middle_k = query_k[:, middle_frame_index]
+            middle_v = query_v[:, middle_frame_index]
+            assert len(middle_k.shape) == 4
+
+            query_q = query_q.permute(0, 2, 1, 3, 4).contiguous().view(b, c, -1)
+            middle_k = middle_k.view(b, c, -1).permute(0, 2, 1).contiguous()
+            middle_v = middle_v.contiguous().view(b, c, -1)
+            new_q, sim_middle = self.transformer1(query_q, middle_k, middle_v)
+
+            new_q = query_q + self.dropout(new_q.transpose(1, 2)).transpose(1, 2)
+            new_q = self.layer_norm(new_q.transpose(1, 2)).transpose(1, 2)
+
+            Out, sim_refer = self.transformer1(new_q, s_middle_k, s_middle_v)
+
+            Out = new_q + self.dropout(Out.transpose(1, 2)).transpose(1, 2)
+            Out = self.layer_norm(Out.transpose(1, 2)).transpose(1, 2)
+
+            after_transform = Out.view(b, vc, t, h, w)
+            after_transform = after_transform.permute(0, 2, 1, 3, 4).contiguous()
+
+            query_feat = self.conv_q(query_feat)
+            after_transform = after_transform.view(-1, vc, h, w)
+            after_transform = torch.cat((after_transform, query_feat), dim=1)
+            srcs.append(after_transform)
+
+
 
         if self.two_stage:
             query_embeds = None
@@ -272,10 +401,12 @@ class ReferFormer(nn.Module):
         else:
             query_embeds = self.query_embed.weight
 
-        text_embed = repeat(text_sentence_features, 'b c -> b t q c', t=t, q=self.num_queries)
+        text_embed = repeat(query_text_sentence_features, 'b c -> b t q c', t=t, q=self.num_queries)
         hs, memory, init_reference, inter_references, enc_outputs_class, enc_outputs_coord_unact, inter_samples = \
-            self.transformer(srcs, text_embed, masks, poses, query_embeds)
+            self.transformer(srcs, text_embed, qmasks, qposes, query_embeds)
+
         out = {}
+
         outputs_classes = []
         outputs_coords = []
         for lvl in range(hs.shape[0]):
@@ -296,13 +427,16 @@ class ReferFormer(nn.Module):
             outputs_coords.append(outputs_coord)
         outputs_class = torch.stack(outputs_classes)
         outputs_coord = torch.stack(outputs_coords)
+
         outputs_class = rearrange(outputs_class, 'l (b t) q k -> l b t q k', b=b, t=t)
         outputs_coord = rearrange(outputs_coord, 'l (b t) q n -> l b t q n', b=b, t=t)
         out['pred_logits'] = outputs_class[-1]
         out['pred_boxes'] = outputs_coord[-1]
-        mask_features = self.pixel_decoder(features, text_features, pos, memory,
+
+        mask_features = self.pixel_decoder(q_features, query_text_features, q_pos, memory,
                                            nf=t)
         mask_features = rearrange(mask_features, '(b t) c h w -> b t c h w', b=b, t=t)
+
         outputs_seg_masks = []
         for lvl in range(hs.shape[0]):
             dynamic_mask_head_params = self.controller(hs[lvl])
@@ -310,12 +444,14 @@ class ReferFormer(nn.Module):
             lvl_references = inter_references[lvl, ..., :2]
             lvl_references = rearrange(lvl_references, '(b t) q n -> b (t q) n', b=b, t=t)
             outputs_seg_mask = self.dynamic_mask_with_coords(mask_features, dynamic_mask_head_params, lvl_references,
-                                                             targets)
+                                                             q_targets)
             outputs_seg_mask = rearrange(outputs_seg_mask, 'b (t q) h w -> b t q h w', t=t)
             outputs_seg_masks.append(outputs_seg_mask)
         out['pred_masks'] = outputs_seg_masks[-1]
+
         if self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(outputs_class, outputs_coord, outputs_seg_masks)
+
         if not self.training:
             inter_references = inter_references[-2, :, :, :2]
             inter_references = rearrange(inter_references, '(b t) q n -> b t q n', b=b, t=t)
@@ -324,6 +460,7 @@ class ReferFormer(nn.Module):
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord, outputs_seg_masks):
+
         return [{"pred_logits": a, "pred_boxes": b, "pred_masks": c}
                 for a, b, c in zip(outputs_class[:-1], outputs_coord[:-1], outputs_seg_masks[:-1])]
 
@@ -331,12 +468,17 @@ class ReferFormer(nn.Module):
         if isinstance(captions[0], str):
             tokenized = self.tokenizer.batch_encode_plus(captions, padding="longest", return_tensors="pt").to(device)
             encoded_text = self.text_encoder(**tokenized)
+
             text_attention_mask = tokenized.attention_mask.ne(1).bool()
+
             text_features = encoded_text.last_hidden_state
             text_features = self.resizer(text_features)
             text_masks = text_attention_mask
+
             text_features = NestedTensor(text_features, text_masks)
+
             text_sentence_features = encoded_text.pooler_output
+
             text_sentence_features = self.resizer(text_sentence_features)
         else:
             raise ValueError("Please mask sure the caption is a list of string")
@@ -358,8 +500,10 @@ class ReferFormer(nn.Module):
         """
         device = mask_features.device
         b, t, c, h, w = mask_features.shape
+
         _, num_queries = reference_points.shape[:2]
         q = num_queries // t
+
         new_reference_points = []
         for i in range(b):
             img_h, img_w = targets[i]['size']
@@ -367,8 +511,8 @@ class ReferFormer(nn.Module):
             tmp_reference_points = reference_points[i] * scale_f[None, :]
             new_reference_points.append(tmp_reference_points)
         new_reference_points = torch.stack(new_reference_points, dim=0)
-        reference_points = new_reference_points
 
+        reference_points = new_reference_points
 
         if self.rel_coord:
             reference_points = rearrange(reference_points, 'b (t q) n -> b t q n', t=t, q=q)
@@ -377,6 +521,7 @@ class ReferFormer(nn.Module):
                               locations.reshape(1, 1, 1, h, w, 2)
             relative_coords = relative_coords.permute(0, 1, 2, 5, 3,
                                                       4)
+
             mask_features = repeat(mask_features, 'b t c h w -> b t q c h w',
                                    q=q)
             mask_features = torch.cat([mask_features, relative_coords], dim=3)
@@ -384,13 +529,16 @@ class ReferFormer(nn.Module):
             mask_features = repeat(mask_features, 'b t c h w -> b t q c h w',
                                    q=q)
         mask_features = mask_features.reshape(1, -1, h, w)
+
         mask_head_params = mask_head_params.flatten(0, 1)
         weights, biases = parse_dynamic_params(
             mask_head_params, self.dynamic_mask_channels,
             self.weight_nums, self.bias_nums
         )
+
         mask_logits = self.mask_heads_forward(mask_features, weights, biases, mask_head_params.shape[0])
         mask_logits = mask_logits.reshape(-1, 1, h, w)
+
         assert self.mask_feat_stride >= self.mask_out_stride
         assert self.mask_feat_stride % self.mask_out_stride == 0
 
@@ -418,6 +566,19 @@ class ReferFormer(nn.Module):
             if i < n_layers - 1:
                 x = F.relu(x)
         return x
+
+    def transformer1(self, Q, K, V):
+
+        B, CQ, WQ = Q.shape
+        _, CV, WK = V.shape
+
+        P = torch.bmm(K, Q)
+        P = P / math.sqrt(CQ)
+        P = torch.softmax(P, dim=1)
+
+        M = torch.bmm(V, P)
+
+        return M, P
 
 
 def parse_dynamic_params(params, channels, weight_nums, bias_nums):
@@ -524,6 +685,32 @@ class FeatureResizer(nn.Module):
         return output
 
 
+def simple_transform(x, beta):
+    x = torch.sign(x) / torch.pow(torch.log(1 / abs(x) + 1), beta)
+    return x
+
+
+def extended_simple_transform(x, beta):
+    zero_tensor = torch.zeros_like(x)
+    x_pos = torch.maximum(x, zero_tensor)
+    x_neg = torch.minimum(x, zero_tensor)
+    x_pos = 1 / torch.pow(torch.log(1 / (x_pos + 1e-5) + 1), beta)
+    x_neg = -1 / torch.pow(torch.log(1 / (-x_neg + 1e-5) + 1), beta)
+    return x_pos + x_neg
+
+
+class QueryKeyValue(nn.Module):
+
+    def __init__(self, indim, keydim, valdim):
+        super(QueryKeyValue, self).__init__()
+        self.query = nn.Conv2d(indim, keydim, kernel_size=3, padding=1, stride=1)
+        self.Key = nn.Conv2d(indim, keydim, kernel_size=3, padding=1, stride=1)
+        self.Value = nn.Conv2d(indim, valdim, kernel_size=3, padding=1, stride=1)
+
+    def forward(self, x):
+        return self.query(x), self.Key(x), self.Value(x)
+
+
 def build(args):
     if args.binary:
         num_classes = 1
@@ -538,7 +725,6 @@ def build(args):
             num_classes = 91
     device = torch.device(args.device)
 
-
     if 'video_swin' in args.backbone:
         from .video_swin_transformer import build_video_swin_backbone
         backbone = build_video_swin_backbone(args)
@@ -550,7 +736,7 @@ def build(args):
 
     transformer = build_deforamble_transformer(args)
 
-    model = ReferFormer(
+    model = CMA(
         backbone,
         transformer,
         num_classes=num_classes,
@@ -566,7 +752,7 @@ def build(args):
         two_stage=args.two_stage,
         freeze_text_encoder=args.freeze_text_encoder,
         rel_coord=args.rel_coord,
-        use_dab=True,
+        use_dab=args.use_dab,
         num_patterns=args.num_patterns,
         random_refpoints_xy=args.random_refpoints_xy
     )
@@ -597,7 +783,6 @@ def build(args):
         losses=losses,
         focal_alpha=args.focal_alpha)
     criterion.to(device)
-
 
     postprocessors = build_postprocessors(args, args.dataset_file)
     return model, criterion, postprocessors
