@@ -1,5 +1,5 @@
 
-The official implementation of the paper: 
+The official implementation of the ICCV2023 paper: 
 
 <div align="center">
 <h1>
@@ -29,11 +29,23 @@ Likewise, our model outperforms the baselines significantly on benchmarks, reach
 On Mini-Ref-YouTube-VOS, our model achieves an average performance of 53.1 J and 54.8 F, which is 10% better than the baseline performance. 
 Furthermore, we show impressive results of 77.7 J and 74.8 F on Mini-Ref-SAIL-VOS, which are significantly better than the baseline.
 
+> [**Learning Cross-Modal Affinity for Referring Video Object Segmentation 
+Targeting Limited Samples**](https://arxiv.org/abs/2309.02041v1)
+>
+> Guanghui Li, Mingqi Gao, Heng Liu, Xiantong Zhen, Feng Zheng
+
+
+## Requirements
+
+We test the codes in the following environments, other versions may also be compatible:
+
+- CUDA 11.3 
+- Python 3.9
+- Pytorch 1.10.1
 
 
 
-
-
+## Data Preparation
 Create a new directory data to store all the datasets.
 
 1. Downlaod the Mini-Ref-YouTube-VOS dataset and Mini-Ref-SAIL-VOS dataset from the [website](https://drive.google.com/drive/folders/1ZdrQY8gKKEmMoJxP13ZZ5_Qrc4hGoZUj?usp=sharing).
@@ -56,26 +68,31 @@ data
 ```
 
 
-
+### Training
 ```
 ./scripts/train_ytvos.sh [/path/to/output_dir] [/path/to/pretrained_weight] --backbone [backbone]  --group 1
 ```
 
-
+### Inference & Evaluation
 
 ```
 python test.py --dataset_file mini-ytvos --group 1
 ```
 
 
-
-
-
+## Acknowledgement
 This repo is based on [ReferFormer](https://github.com/wjn922/ReferFormer) and [DANet](https://github.com/scutpaul/DANet). Thanks for their wonderful works.
 
-
-
-
-```
+## Citation
 
 ```
+@inproceedings{li2023learning,
+      title={Learning Cross-Modal Affinity for Referring Video Object Segmentation Targeting Limited Samples}, 
+      author={Li, Guanghui and Gao, Mingqi and Liu, Heng and Zhen, Xiantong and Zheng, Feng},
+      booktitle={ICCV},
+      year={2023}
+}
+```
+
+
+
