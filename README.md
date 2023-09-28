@@ -86,11 +86,13 @@ This repo is based on [ReferFormer](https://github.com/wjn922/ReferFormer) and [
 ## Citation
 
 ```
-@inproceedings{li2023learning,
-      title={Learning Cross-Modal Affinity for Referring Video Object Segmentation Targeting Limited Samples}, 
-      author={Li, Guanghui and Gao, Mingqi and Liu, Heng and Zhen, Xiantong and Zheng, Feng},
-      booktitle={ICCV},
-      year={2023}
+@InProceedings{Li_2023_ICCV,
+    author    = {Li, Guanghui and Gao, Mingqi and Liu, Heng and Zhen, Xiantong and Zheng, Feng},
+    title     = {Learning Cross-Modal Affinity for Referring Video Object Segmentation Targeting Limited Samples},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    month     = {October},
+    year      = {2023},
+    pages     = {2684-2693}
 }
 ```
 
