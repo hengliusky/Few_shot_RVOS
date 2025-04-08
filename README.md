@@ -20,7 +20,12 @@ Referring Video Object Segmentation (RVOS) aims to segment specific objects in v
 
 > [**Few-Shot Referring Video Single- and Multi-Object Segmentation via Cross-Modal Affinity with Instance Sequence Matching**](https://arxiv.org/abs/2309.02041v1)
 >
-> Heng Liu, Guanghui Li, Mingqi Gao, Heng Liu, Xiantong Zhen, Feng Zheng, Yang Wang*
+> Heng Liu 1, Guanghui Li 1, Mingqi Gao 2, Xiantong Zhen 2, Feng Zheng 2, Yang Wang* 3
+>
+>
+> 1 School of Computer Science and Technology, Anhui University of Technology
+> 2 Department of Computer Science and Engineering, Southern University of Science and Technology
+> 3 School of Computer Science and Information Engineering, Hefei University of Technology
 
 
 ## Requirements
