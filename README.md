@@ -24,7 +24,9 @@ Referring Video Object Segmentation (RVOS) aims to segment specific objects in v
 >
 >
 > 1 School of Computer Science and Technology, Anhui University of Technology
+> 
 > 2 Department of Computer Science and Engineering, Southern University of Science and Technology
+> 
 > 3 School of Computer Science and Information Engineering, Hefei University of Technology
 
 
