@@ -10,7 +10,7 @@ Few-Shot Referring Video Single- and Multi-Object Segmentation via Cross-Modal A
 </div>
 
 
-<p align="center"><img src="docs/figtotal.png" width="800" height="400"/></p>
+<p align="center"><img src="docs/figtotal.png" width="800" height="200"/></p>
 
 
 
