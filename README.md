@@ -85,7 +85,9 @@ This repo is based on [ReferFormer](https://github.com/wjn922/ReferFormer) and [
   title={Few-Shot Referring Video Single- and Multi-Object Segmentation via Cross-Modal Affinity with Instance Sequence Matching},
   author={Heng Liu, Guanghui Li, Mingqi Gao, Heng Liu, Xiantong Zhen, Feng Zheng, Yang Wang},
   journal={International Journal of Computer Vision},
-  year={2025}
+  year={2025},
+  url ={https://doi.org/10.1007/s11263-025-02444-0},
+  doi ={10.1007/s11263-025-02440-0}
 }
 
 @InProceedings{Li_2023_ICCV,
