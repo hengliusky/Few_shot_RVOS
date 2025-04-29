@@ -1,5 +1,5 @@
 
-The official implementation of the IJCV2025 paper: 
+The implementation of the IJCV2025 paper: 
 
 <div align="center">
 <h1>
@@ -18,8 +18,9 @@ Few-Shot Referring Video Single- and Multi-Object Segmentation via Cross-Modal A
 
 Referring Video Object Segmentation (RVOS) aims to segment specific objects in videos based on the provided natural language descriptions. As a new supervised visual learning task, achieving RVOS for a given scene requires a substantial amount of annotated data. However, only minimal annotations are usually available for new scenes in realistic scenarios. Another practical problem is that, apart from a single object, multiple objects of the same category coexist in the same scene. Both of these issues may significantly reduce the performance of existing RVOS methods in handling real-world applications. In this paper, we propose a simple yet effective model to address these issues by incorporating a newly designed cross-modal affinity (CMA) module based on a Transformer architecture. The CMA module facilitates the establishment of multi-modal affinity over a limited number of samples, allowing the rapid acquisition of new semantic information while fostering the model’s adaptability to diverse scenarios. Furthermore, we extend our FS-RVOS approach to multiple objects through a new instance sequence matching module over CMA, which filters out all object trajectories with similarity to language features that exceed a matching threshold, thereby achieving few-shot referring multi-object segmentation (FS-RVMOS). To foster research in this field, we establish a new dataset based on currently available datasets, which covers many scenarios in terms of single-object and multi-object data, hence effectively simulating real-world scenes. Extensive experiments and comparative analyses underscore the exceptional performance of our proposed FS-RVOS and FS-RVMOS methods. Our method consistently outperforms existing related approaches through practical performance evaluations and robustness studies, achieving optimal performance on metrics across diverse benchmark tests.
 
->[Paper](https://arxiv.org/abs/2504.13710)
+>[arxiv Paper](https://arxiv.org/abs/2504.13710)
 <a href='https://arxiv.org/abs/2504.13710'><img src='https://img.shields.io/badge/arXiv-2412.11609-b31b1b.svg'></a> &nbsp;&nbsp;
+>[IJCV Paper](https://doi.org/10.1007/s11263-025-02444-0)
 
 > **Few-Shot Referring Video Single- and Multi-Object Segmentation via Cross-Modal Affinity with Instance Sequence Matching**
 >
